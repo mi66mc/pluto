@@ -1,6 +1,12 @@
 [package]
 name = "pluto"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2024"
+description = "A interpreted programming language made in Rust"
+keywords = ["rust"]
+license-file = "LICENSE"
+categories = ["rust]
+readme = "README.md"
+repository = "https://github.com/mi66mc/pluto"
 
 [dependencies]
