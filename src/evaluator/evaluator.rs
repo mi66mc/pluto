@@ -9,6 +9,7 @@ pub enum Value {
     Number(i64),
     Float(f64),
     BuiltInFunction(fn(Vec<Value>) -> Value),
+    String(String),
     // add more
 }
 
@@ -27,6 +28,7 @@ impl<'a> Evaluator<'a> {
                     match arg {
                         Value::Number(n)    => println!("{}", n),
                         Value::Float(f)     => println!("{}", f),
+                        Value::String(s) => println!("{}", s),
                         _ => println!("{:?}", arg),
                     }
                 }
@@ -75,6 +77,10 @@ impl<'a> Evaluator<'a> {
             ASTNode::NumberLiteral(n) => Ok(Value::Number(*n)),
 
             ASTNode::FloatLiteral(f) => Ok(Value::Float(*f)),
+
+            ASTNode::StringLiteral(s) => {
+                Ok(Value::String(s.clone()))
+            }
 
             ASTNode::Identifier(name) => {
                 self.env

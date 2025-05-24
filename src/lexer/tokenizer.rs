@@ -38,6 +38,21 @@ pub fn tokenize(input: &str) -> Vec<Token> {
         }
 
         match current_char {
+            '\"' => {
+                let start = position + 1;
+                position += 1;
+                while position < bytes.len() && bytes[position] as char != '\"' {
+                    position += 1;
+                }
+                if position < bytes.len() {
+                    let string_literal = &input[start..position];
+                    tokens.push(Token::new(TokenKind::StringLiteral(string_literal.to_string()), start));
+                    position += 1;
+                } else {
+                    tokens.push(Token::new(TokenKind::Unknown('\"'), start));
+                }
+                continue;
+            }
             '+' => tokens.push(Token::new(TokenKind::Plus, position)),
             '-' => tokens.push(Token::new(TokenKind::Minus, position)),
             '*' => tokens.push(Token::new(TokenKind::Star, position)),

@@ -80,9 +80,10 @@ impl<'a> Parser<'a> {
 
     fn parse_primary(&mut self) -> Result<ASTNode, String> {
         match self.advance().kind.clone() {
-            TokenKind::Number(n)        => Ok(ASTNode::NumberLiteral(n)),
-            TokenKind::Float(f)         => Ok(ASTNode::FloatLiteral(f)),
-            TokenKind::Identifier(s) => {
+            TokenKind::Number(n)            => Ok(ASTNode::NumberLiteral(n)),
+            TokenKind::Float(f)             => Ok(ASTNode::FloatLiteral(f)),
+            TokenKind::StringLiteral(s)  => Ok(ASTNode::StringLiteral(s)),
+            TokenKind::Identifier(s)     => {
                 // Check for function call: identifier followed by '('
                 if self.peek_kind() == Some(&TokenKind::LParen) {
                     self.advance(); // consume '('
