@@ -1,5 +1,5 @@
 [package]
-name = "pluto"
+name = "pluto-lang"
 version = "0.1.2"
 edition = "2024"
 description = "A interpreted programming language made in Rust"
