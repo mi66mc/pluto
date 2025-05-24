@@ -134,6 +134,25 @@ impl<'a> Evaluator<'a> {
                 "/" => Value::Float(a / b as f64),
                 _ => panic!("Unknown operator"),
             },
+            (Value::Float(a), Value::Float(b)) => match op {
+                "+" => Value::Float(a + b),
+                "-" => Value::Float(a - b),
+                "*" => Value::Float(a * b),
+                "/" => Value::Float(a / b),
+                _ => panic!("Unknown operator"),
+            },
+            (Value::String(a), Value::String(b)) => match op {
+                "+" => Value::String(a + &b),
+                _ => panic!("Unknown operator"),
+            },
+            (Value::String(a), Value::Number(b)) => match op {
+                "+" => Value::String(a + &b.to_string()),
+                _ => panic!("Unknown operator"),
+            },
+            (Value::String(a), Value::Float(b)) => match op {
+                "+" => Value::String(a + &b.to_string()),
+                _ => panic!("Unknown operator"),
+            }
             _ => panic!("Type error"),
         }
     }

@@ -84,9 +84,8 @@ impl<'a> Parser<'a> {
             TokenKind::Float(f)             => Ok(ASTNode::FloatLiteral(f)),
             TokenKind::StringLiteral(s)  => Ok(ASTNode::StringLiteral(s)),
             TokenKind::Identifier(s)     => {
-                // Check for function call: identifier followed by '('
                 if self.peek_kind() == Some(&TokenKind::LParen) {
-                    self.advance(); // consume '('
+                    self.advance();
                     let mut args = Vec::new();
                     if self.peek_kind() != Some(&TokenKind::RParen) {
                         loop {

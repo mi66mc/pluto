@@ -1,5 +1,7 @@
 let x = 5.5;
 print(x + 5);
 print(x);
-let a = "adasdasd";
+let a = "Result: ";
+print(a);
+let a = a + x;
 print(a);
