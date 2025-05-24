@@ -79,51 +79,51 @@ impl ASTNodeTrait for ASTNode {
     }
 }
 
-impl ASTNode {
-    pub fn new_program(statements: Vec<ASTNode>) -> Self {
-        ASTNode::Program(statements)
-    }
+// impl ASTNode {
+//     pub fn new_program(statements: Vec<ASTNode>) -> Self {
+//         ASTNode::Program(statements)
+//     }
 
-    pub fn new_variable_declaration(name: String, initializer: Option<Box<ASTNode>>) -> Self {
-        ASTNode::VariableDeclaration(name, initializer)
-    }
+//     pub fn new_variable_declaration(name: String, initializer: Option<Box<ASTNode>>) -> Self {
+//         ASTNode::VariableDeclaration(name, initializer)
+//     }
 
-    pub fn new_assignment(name: String, value: Box<ASTNode>) -> Self {
-        ASTNode::Assignment(name, value)
-    }
+//     pub fn new_assignment(name: String, value: Box<ASTNode>) -> Self {
+//         ASTNode::Assignment(name, value)
+//     }
 
-    pub fn new_binary_expression(left: Box<ASTNode>, operator: String, right: Box<ASTNode>) -> Self {
-        ASTNode::BinaryExpression(left, operator, right)
-    }
+//     pub fn new_binary_expression(left: Box<ASTNode>, operator: String, right: Box<ASTNode>) -> Self {
+//         ASTNode::BinaryExpression(left, operator, right)
+//     }
 
-    pub fn new_number_literal(value: i64) -> Self {
-        ASTNode::NumberLiteral(value)
-    }
+//     pub fn new_number_literal(value: i64) -> Self {
+//         ASTNode::NumberLiteral(value)
+//     }
 
-    pub fn new_identifier(name: String) -> Self {
-        ASTNode::Identifier(name)
-    }
+//     pub fn new_identifier(name: String) -> Self {
+//         ASTNode::Identifier(name)
+//     }
 
-    pub fn new_function_declaration(name: String, params: Vec<String>, body: Box<ASTNode>) -> Self {
-        ASTNode::FunctionDeclaration(name, params, body)
-    }
+//     pub fn new_function_declaration(name: String, params: Vec<String>, body: Box<ASTNode>) -> Self {
+//         ASTNode::FunctionDeclaration(name, params, body)
+//     }
 
-    pub fn new_function_call(name: String, args: Vec<Box<ASTNode>>) -> Self {
-        ASTNode::FunctionCall(name, args)
-    }
-    pub fn new_if_statement(condition: Box<ASTNode>, then_branch: Box<ASTNode>, else_branch: Option<Box<ASTNode>>) -> Self {
-        ASTNode::IfStatement(condition, then_branch, else_branch)
-    }
-    pub fn new_while_statement(condition: Box<ASTNode>, body: Box<ASTNode>) -> Self {
-        ASTNode::WhileStatement(condition, body)
-    }
-    pub fn new_return_statement(value: Option<Box<ASTNode>>) -> Self {
-        ASTNode::ReturnStatement(value)
-    }
-    pub fn new_member_access(object: Box<ASTNode>, property: String) -> Self {
-        ASTNode::MemberAccess(object, property)
-    }
-    pub fn new_method_call(object: Box<ASTNode>, method: String, args: Vec<Box<ASTNode>>) -> Self {
-        ASTNode::MethodCall(object, method, args)
-    }
-}
+//     pub fn new_function_call(name: String, args: Vec<Box<ASTNode>>) -> Self {
+//         ASTNode::FunctionCall(name, args)
+//     }
+//     pub fn new_if_statement(condition: Box<ASTNode>, then_branch: Box<ASTNode>, else_branch: Option<Box<ASTNode>>) -> Self {
+//         ASTNode::IfStatement(condition, then_branch, else_branch)
+//     }
+//     pub fn new_while_statement(condition: Box<ASTNode>, body: Box<ASTNode>) -> Self {
+//         ASTNode::WhileStatement(condition, body)
+//     }
+//     pub fn new_return_statement(value: Option<Box<ASTNode>>) -> Self {
+//         ASTNode::ReturnStatement(value)
+//     }
+//     pub fn new_member_access(object: Box<ASTNode>, property: String) -> Self {
+//         ASTNode::MemberAccess(object, property)
+//     }
+//     pub fn new_method_call(object: Box<ASTNode>, method: String, args: Vec<Box<ASTNode>>) -> Self {
+//         ASTNode::MethodCall(object, method, args)
+//     }
+// }

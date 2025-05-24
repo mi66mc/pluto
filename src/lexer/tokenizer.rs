@@ -65,7 +65,7 @@ pub fn tokenize(input: &str) -> Vec<Token> {
             '.' => tokens.push(Token::new(TokenKind::Dot, position)),
             'a'..='z' | 'A'..='Z' => {
                 let start = position;
-                while position < bytes.len() && (bytes[position] as char).is_alphanumeric() {
+                while position < bytes.len() && ((bytes[position] as char).is_alphanumeric() || (bytes[position] as char) == '_') {
                     position += 1;
                 }
                 let identifier = &input[start..position];

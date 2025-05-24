@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use crate::parser::ast::{ASTNode, ASTNodeTrait};
 use crate::parser::parser::Parser;
 use crate::constants::token::Token;
+use std::fmt;
 
 #[derive(Clone, Debug)]
 pub enum Value {
@@ -14,6 +15,18 @@ pub enum Value {
     // add more
 }
 
+impl fmt::Display for Value {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Value::Number(n) => write!(f, "{}", n),
+            Value::Float(fl) => write!(f, "{}", fl),
+            Value::String(s) => write!(f, "{}", s),
+            Value::BuiltInFunction(_) => write!(f, "<built-in function>"),
+            Value::Module(_) => write!(f, "<module>"),
+        }
+    }
+}
+
 pub struct Evaluator<'a> {
     parser: Parser<'a>,
     env: HashMap<String, Value>,
@@ -22,6 +35,11 @@ pub struct Evaluator<'a> {
 impl<'a> Evaluator<'a> {
     pub fn new(tokens: &'a Vec<Token>) -> Self {
         let mut env: HashMap<String, Value> = HashMap::new();
+
+        // -----------------------------------------------------
+        // ------------------   BUILTINS   ---------------------
+        // -----------------------------------------------------
+
         let mut math = HashMap::new();
         math.insert("pi".to_string(), Value::Float(std::f64::consts::PI));
         math.insert("pow".to_string(), Value::BuiltInFunction(|args| {
@@ -37,7 +55,12 @@ impl<'a> Evaluator<'a> {
             };
             Value::Float(a.powf(b))
         }));
+
         env.insert("Math".to_string(), Value::Module(math));
+        
+        // -----------------------------------------------------
+        // ------------------   GENERAL ------------------------
+        // -----------------------------------------------------
         env.insert(
             "print".to_string(),
             Value::BuiltInFunction(|args| {
@@ -52,6 +75,24 @@ impl<'a> Evaluator<'a> {
                 Value::Number(0)
             }),
         );
+
+        env.insert(
+            "type".to_string(),
+            Value::BuiltInFunction(|args| {
+                if let Some(arg) = args.get(0) {
+                    match arg {
+                        Value::Number(_) => Value::String("Number".to_string()),
+                        Value::Float(_) => Value::String("Float".to_string()),
+                        Value::String(_) => Value::String("String".to_string()),
+                        _ => Value::String("UNKNOWN".to_string()),
+                    }
+                } else {
+                    Value::String("UNKNOWN".to_string())
+                }
+            }),
+        );
+
+
         Evaluator {
             parser: Parser::new(tokens),
             env: env,
@@ -135,8 +176,28 @@ impl<'a> Evaluator<'a> {
                         }
                     }
                     Value::String(ref s) => {
-                        if method == "len" {
-                            return Ok(Value::Number(s.len() as i64));
+                        match method.as_str() {
+                            "len" => return Ok(Value::Number(s.len() as i64)),
+                            "to_upper" => return Ok(Value::String(s.to_uppercase())),
+                            "to_lower" => return Ok(Value::String(s.to_lowercase())),
+                            "char_at" => {
+                                if let Some(arg) = args.get(0) {
+                                    if let Value::Number(index) = self.eval(arg)? {
+                                        if index >= 0 && (index as usize) < s.len() {
+                                            return Ok(Value::String(s.chars().nth(index as usize).unwrap().to_string()));
+                                        }
+                                    }
+                                }
+                                return Err("Index out of bounds".into());
+                            }
+                            _ => {}
+                        }
+                    }
+                    Value::Number(_) | Value::Float(_) => {
+                        match method.as_str() {
+                            "to_string" => return Ok(Value::String(obj_val.to_string())),
+                            "type" => return Ok(Value::String("Number".to_string())),
+                            _ => {}
                         }
                     }
                     _ => {}

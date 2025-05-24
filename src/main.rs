@@ -35,12 +35,12 @@ fn main() {
     let contents = fs::read_to_string(filename).expect("Something went wrong reading the file");
 
     let tokens = lexer::tokenizer::tokenize(&contents);
-    for token in &tokens {
-        println!("{:?}", token);
-    }
-    let mut parser = parser::parser::Parser::new(&tokens);
-    let ast = parser.parse().unwrap();
-    println!("{:#?}", ast);
+    // for token in &tokens {
+    //     println!("{:?}", token);
+    // }
+    // let mut parser = parser::parser::Parser::new(&tokens);
+    // let ast = parser.parse().unwrap();
+    // println!("{:#?}", ast);
     let mut evaluator = evaluator::evaluator::Evaluator::new(&tokens);
     evaluator.evaluate().unwrap();
 }
