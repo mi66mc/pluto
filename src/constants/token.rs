@@ -4,6 +4,7 @@ pub enum TokenKind {
     Number(i64),
     Float(f64),
     StringLiteral(String),
+    Dot,
     Plus,
     Minus,
     Star,
@@ -28,6 +29,7 @@ impl TokenKindTrait for TokenKind {
             TokenKind::Identifier(name) => name.clone(),
             TokenKind::Number(value) => value.to_string(),
             TokenKind::Float(value) => value.to_string(),
+            TokenKind::Dot => ".".to_string(),
             TokenKind::Plus => "+".to_string(),
             TokenKind::Minus => "-".to_string(),
             TokenKind::Star => "*".to_string(),
@@ -56,18 +58,18 @@ impl Token {
         Token { kind, position }
     }
 
-    pub fn is_identifier(&self) -> bool {
-        matches!(self.kind, TokenKind::Identifier(_))
-    }
+    // pub fn is_identifier(&self) -> bool {
+    //     matches!(self.kind, TokenKind::Identifier(_))
+    // }
 
-    pub fn is_number(&self) -> bool {
-        matches!(self.kind, TokenKind::Number(_))
-    }
+    // pub fn is_number(&self) -> bool {
+    //     matches!(self.kind, TokenKind::Number(_))
+    // }
 
-    pub fn is_operator(&self) -> bool {
-        matches!(
-            self.kind,
-            TokenKind::Plus | TokenKind::Minus | TokenKind::Star | TokenKind::Slash
-        )
-    }
+    // pub fn is_operator(&self) -> bool {
+    //     matches!(
+    //         self.kind,
+    //         TokenKind::Plus | TokenKind::Minus | TokenKind::Star | TokenKind::Slash
+    //     )
+    // }
 }

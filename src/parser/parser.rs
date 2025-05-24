@@ -66,7 +66,7 @@ impl<'a> Parser<'a> {
             if op_prec < min_prec {
                 break;
             }
-            let op_token = self.advance().clone();       // consome operador
+            let op_token = self.advance().clone();
             let right = self.parse_expression(op_prec + 1)?;
             left = ASTNode::BinaryExpression(
                 Box::new(left),
@@ -79,11 +79,11 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_primary(&mut self) -> Result<ASTNode, String> {
-        match self.advance().kind.clone() {
-            TokenKind::Number(n)            => Ok(ASTNode::NumberLiteral(n)),
-            TokenKind::Float(f)             => Ok(ASTNode::FloatLiteral(f)),
-            TokenKind::StringLiteral(s)  => Ok(ASTNode::StringLiteral(s)),
-            TokenKind::Identifier(s)     => {
+        let mut node = match self.advance().kind.clone() {
+            TokenKind::Number(n)            => ASTNode::NumberLiteral(n),
+            TokenKind::Float(f)             => ASTNode::FloatLiteral(f),
+            TokenKind::StringLiteral(s)     => ASTNode::StringLiteral(s),
+            TokenKind::Identifier(s)        => {
                 if self.peek_kind() == Some(&TokenKind::LParen) {
                     self.advance();
                     let mut args = Vec::new();
@@ -98,18 +98,52 @@ impl<'a> Parser<'a> {
                         }
                     }
                     self.consume(TokenKind::RParen, "Expected ')' after arguments")?;
-                    Ok(ASTNode::FunctionCall(s, args))
+                    ASTNode::FunctionCall(s, args)
                 } else {
-                    Ok(ASTNode::Identifier(s))
+                    ASTNode::Identifier(s)
                 }
             }
             TokenKind::LParen        => {
                 let expr = self.parse_expression(0)?;
                 self.consume(TokenKind::RParen, "Expected ')' after expression")?;
-                Ok(expr)
+                expr
             }
-            other => Err(format!("Unexpected token: {:?}", other)),
+            other => return Err(format!("Unexpected token: {:?}", other)),
+        };
+
+        loop {
+            if self.peek_kind() == Some(&TokenKind::Dot) {
+                self.advance(); // '.'
+                let member_token = self.advance();
+                let member_name = if let TokenKind::Identifier(ref s) = member_token.kind {
+                    s.clone()
+                } else {
+                    return Err("Expected identifier after '.'".into());
+                };
+                if self.peek_kind() == Some(&TokenKind::LParen) {
+                    self.advance(); // '('
+                    let mut args = Vec::new();
+                    if self.peek_kind() != Some(&TokenKind::RParen) {
+                        loop {
+                            let arg = self.parse_expression(0)?;
+                            args.push(Box::new(arg));
+                            if self.peek_kind() == Some(&TokenKind::RParen) {
+                                break;
+                            }
+                            self.consume(TokenKind::Comma, "Expected ',' or ')' in argument list")?;
+                        }
+                    }
+                    self.consume(TokenKind::RParen, "Expected ')' after arguments")?;
+                    node = ASTNode::MethodCall(Box::new(node), member_name, args);
+                } else {
+                    node = ASTNode::MemberAccess(Box::new(node), member_name);
+                }
+            } else {
+                break;
+            }
         }
+
+        Ok(node)
     }
 
     // -----------------------------------------------------

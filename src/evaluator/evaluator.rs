@@ -10,6 +10,7 @@ pub enum Value {
     Float(f64),
     BuiltInFunction(fn(Vec<Value>) -> Value),
     String(String),
+    Module(HashMap<String, Value>)
     // add more
 }
 
@@ -21,6 +22,22 @@ pub struct Evaluator<'a> {
 impl<'a> Evaluator<'a> {
     pub fn new(tokens: &'a Vec<Token>) -> Self {
         let mut env: HashMap<String, Value> = HashMap::new();
+        let mut math = HashMap::new();
+        math.insert("pi".to_string(), Value::Float(std::f64::consts::PI));
+        math.insert("pow".to_string(), Value::BuiltInFunction(|args| {
+            let a = match args.get(0) {
+                Some(Value::Float(f)) => *f,
+                Some(Value::Number(n)) => *n as f64,
+                _ => return Value::Float(0.0),
+            };
+            let b = match args.get(1) {
+                Some(Value::Float(f)) => *f,
+                Some(Value::Number(n)) => *n as f64,
+                _ => return Value::Float(0.0),
+            };
+            Value::Float(a.powf(b))
+        }));
+        env.insert("Math".to_string(), Value::Module(math));
         env.insert(
             "print".to_string(),
             Value::BuiltInFunction(|args| {
@@ -106,6 +123,35 @@ impl<'a> Evaluator<'a> {
                 } else {
                     Err(format!("Unknown function '{}'", name))
                 }
+            }
+
+            ASTNode::MethodCall(obj, method, args) => {
+                let obj_val = self.eval(obj)?;
+                match obj_val {
+                    Value::Module(ref map) => {
+                        if let Some(Value::BuiltInFunction(f)) = map.get(method) {
+                            let arg_vals = args.iter().map(|a| self.eval(a)).collect::<Result<Vec<_>, _>>()?;
+                            return Ok(f(arg_vals));
+                        }
+                    }
+                    Value::String(ref s) => {
+                        if method == "len" {
+                            return Ok(Value::Number(s.len() as i64));
+                        }
+                    }
+                    _ => {}
+                }
+                Err(format!("No such method '{}' for '{}'", method, obj.to_string()))
+            }
+
+            ASTNode::MemberAccess(object, member) => {
+                let obj_val = self.eval(object)?;
+                if let Value::Module(ref map) = obj_val {
+                    if let Some(val) = map.get(member) {
+                        return Ok(val.clone());
+                    }
+                }
+                Err(format!("No such member '{}' for '{}'", member, object.to_string()))
             }
 
             _ => Err("Unsupported AST node".into()),

@@ -13,6 +13,8 @@ pub enum ASTNode {
     IfStatement(Box<ASTNode>, Box<ASTNode>, Option<Box<ASTNode>>),
     WhileStatement(Box<ASTNode>, Box<ASTNode>),
     ReturnStatement(Option<Box<ASTNode>>),
+    MemberAccess(Box<ASTNode>, String), // Math.pi
+    MethodCall(Box<ASTNode>, String, Vec<Box<ASTNode>>), // Math.pow(x,y)
 }
 
 pub trait ASTNodeTrait {
@@ -68,6 +70,11 @@ impl ASTNodeTrait for ASTNode {
                     "return".to_string()
                 }
             }
+            ASTNode::MemberAccess(object, property) => format!("{}.{}", object.to_string(), property),
+            ASTNode::MethodCall(object, method, args) => {
+                let args_str: Vec<String> = args.iter().map(|arg| arg.to_string()).collect();
+                format!("{}.{}/{}", object.to_string(), method, args_str.join(", "))
+            }
         }
     }
 }
@@ -112,5 +119,11 @@ impl ASTNode {
     }
     pub fn new_return_statement(value: Option<Box<ASTNode>>) -> Self {
         ASTNode::ReturnStatement(value)
+    }
+    pub fn new_member_access(object: Box<ASTNode>, property: String) -> Self {
+        ASTNode::MemberAccess(object, property)
+    }
+    pub fn new_method_call(object: Box<ASTNode>, method: String, args: Vec<Box<ASTNode>>) -> Self {
+        ASTNode::MethodCall(object, method, args)
     }
 }

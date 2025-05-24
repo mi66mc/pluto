@@ -5,3 +5,6 @@ let a = "Result: ";
 print(a);
 let a = a + x;
 print(a);
+print(Math.pow(5,2));
+print(Math.pi);
+print(a.len());
