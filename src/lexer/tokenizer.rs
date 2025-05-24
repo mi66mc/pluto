@@ -16,11 +16,24 @@ pub fn tokenize(input: &str) -> Vec<Token> {
 
         if current_char.is_digit(10) {
             let start = position;
-            while position < bytes.len() && (bytes[position] as char).is_digit(10) {
+            let mut has_dot = false;
+            while position < bytes.len() && ((bytes[position] as char).is_digit(10) || (bytes[position] as char) == '.') {
+                if (bytes[position] as char) == '.' {
+                    if has_dot {
+                        break;
+                    }
+                    has_dot = true;
+                }
                 position += 1;
             }
-            let number: i64 = input[start..position].parse().unwrap();
-            tokens.push(Token::new(TokenKind::Number(number), start));
+            let number_str = &input[start..position];
+            if has_dot {
+                let number: f64 = number_str.parse().unwrap();
+                tokens.push(Token::new(TokenKind::Float(number), start));
+            } else {
+                let number: i64 = number_str.parse().unwrap();
+                tokens.push(Token::new(TokenKind::Number(number), start));
+            }
             continue;
         }
 

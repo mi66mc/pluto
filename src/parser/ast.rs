@@ -5,6 +5,8 @@ pub enum ASTNode {
     Assignment(String, Box<ASTNode>),
     BinaryExpression(Box<ASTNode>, String, Box<ASTNode>),
     NumberLiteral(i64),
+    FloatLiteral(f64),
+    StringLiteral(String),
     Identifier(String),
     FunctionDeclaration(String, Vec<String>, Box<ASTNode>),
     FunctionCall(String, Vec<Box<ASTNode>>),
@@ -39,6 +41,8 @@ impl ASTNodeTrait for ASTNode {
             ASTNode::Assignment(name, value) => format!("{} = {}", name, value.to_string()),
             ASTNode::BinaryExpression(left, operator, right) => format!("{} {} {}", left.to_string(), operator, right.to_string()),
             ASTNode::NumberLiteral(value) => value.to_string(),
+            ASTNode::FloatLiteral(value) => value.to_string(),
+            ASTNode::StringLiteral(value) => format!("\"{}\"", value),
             ASTNode::Identifier(name) => name.clone(),
             ASTNode::FunctionDeclaration(name, params, body) => {
                 let params_str = params.join(", ");

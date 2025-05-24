@@ -7,6 +7,7 @@ use crate::constants::token::Token;
 #[derive(Clone, Debug)]
 pub enum Value {
     Number(i64),
+    Float(f64),
     BuiltInFunction(fn(Vec<Value>) -> Value),
     // add more
 }
@@ -24,7 +25,8 @@ impl<'a> Evaluator<'a> {
             Value::BuiltInFunction(|args| {
                 for arg in args {
                     match arg {
-                        Value::Number(n) => println!("{}", n),
+                        Value::Number(n)    => println!("{}", n),
+                        Value::Float(f)     => println!("{}", f),
                         _ => println!("{:?}", arg),
                     }
                 }
@@ -65,36 +67,14 @@ impl<'a> Evaluator<'a> {
             ASTNode::VariableDeclaration(_, None) => Ok(Value::Number(0)),
 
             ASTNode::BinaryExpression(left, op, right) => {
-                let l = self.eval(left)?;
-                let r = self.eval(right)?;
-                match op.as_str() {
-                    "+" => match (l, r) {
-                        (Value::Number(lv), Value::Number(rv)) => Ok(Value::Number(lv + rv)),
-                        _ => Err("Invalid types for addition".into()),
-                    },
-                    "-" => match (l, r) {
-                        (Value::Number(lv), Value::Number(rv)) => Ok(Value::Number(lv - rv)),
-                        _ => Err("Invalid types for subtraction".into()),
-                    },
-                    "*" => match (l, r) {
-                        (Value::Number(lv), Value::Number(rv)) => Ok(Value::Number(lv * rv)),
-                        _ => Err("Invalid types for multiplication".into()),
-                    },
-                    "/" => match (l, r) {
-                        (Value::Number(lv), Value::Number(rv)) => {
-                            if rv == 0 {
-                                Err("Division by zero".into())
-                            } else {
-                                Ok(Value::Number(lv / rv))
-                            }
-                        }
-                        _ => Err("Invalid types for division".into()),
-                    },
-                    _ => Err(format!("Unknown operator: {}", op)),
-                }
+                let left_val = self.eval(left)?;
+                let right_val = self.eval(right)?;
+                Ok(self.eval_binary(left_val, op, right_val))
             }
 
             ASTNode::NumberLiteral(n) => Ok(Value::Number(*n)),
+
+            ASTNode::FloatLiteral(f) => Ok(Value::Float(*f)),
 
             ASTNode::Identifier(name) => {
                 self.env
@@ -123,6 +103,32 @@ impl<'a> Evaluator<'a> {
             }
 
             _ => Err("Unsupported AST node".into()),
+        }
+    }
+
+    fn eval_binary(&self, left: Value, op: &str, right: Value) -> Value {
+        match (left, right) {
+            (Value::Number(a), Value::Number(b)) => match op {
+                "+" => Value::Number(a + b),
+                "-" => Value::Number(a - b),
+                "*" => Value::Number(a * b),
+                _ => panic!("Unknown operator"),
+            },
+            (Value::Number(a), Value::Float(b)) => match op {
+                "+" => Value::Float(a as f64 + b),
+                "-" => Value::Float(a as f64 - b),
+                "*" => Value::Float(a as f64 * b),
+                "/" => Value::Float(a as f64 / b),
+                _ => panic!("Unknown operator"),
+            },
+            (Value::Float(a), Value::Number(b)) => match op {
+                "+" => Value::Float(a + b as f64),
+                "-" => Value::Float(a - b as f64),
+                "*" => Value::Float(a * b as f64),
+                "/" => Value::Float(a / b as f64),
+                _ => panic!("Unknown operator"),
+            },
+            _ => panic!("Type error"),
         }
     }
 }

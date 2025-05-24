@@ -2,6 +2,8 @@
 pub enum TokenKind {
     Identifier(String),
     Number(i64),
+    Float(f64),
+    StringLiteral(String),
     Plus,
     Minus,
     Star,
@@ -25,6 +27,7 @@ impl TokenKindTrait for TokenKind {
         match self {
             TokenKind::Identifier(name) => name.clone(),
             TokenKind::Number(value) => value.to_string(),
+            TokenKind::Float(value) => value.to_string(),
             TokenKind::Plus => "+".to_string(),
             TokenKind::Minus => "-".to_string(),
             TokenKind::Star => "*".to_string(),
@@ -35,6 +38,7 @@ impl TokenKindTrait for TokenKind {
             TokenKind::Semicolon => ";".to_string(),
             TokenKind::Comma => ",".to_string(),
             TokenKind::Let => "let".to_string(),
+            TokenKind::StringLiteral(value) => format!("\"{}\"", value),
             TokenKind::EOF => "EOF".to_string(),
             TokenKind::Unknown(c) => c.to_string(),
         }
