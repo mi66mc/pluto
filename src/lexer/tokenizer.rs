@@ -3,10 +3,11 @@ use crate::constants::token::Token;
 
 pub fn tokenize(input: &str) -> Vec<Token> {
     let mut tokens = Vec::new();
+    let bytes = input.as_bytes();
     let mut position = 0;
 
-    while position < input.len() {
-        let current_char = input.chars().nth(position).unwrap();
+    while position < bytes.len() {
+        let current_char = bytes[position] as char;
 
         if current_char.is_whitespace() {
             position += 1;
@@ -15,7 +16,7 @@ pub fn tokenize(input: &str) -> Vec<Token> {
 
         if current_char.is_digit(10) {
             let start = position;
-            while position < input.len() && input.chars().nth(position).unwrap().is_digit(10) {
+            while position < bytes.len() && (bytes[position] as char).is_digit(10) {
                 position += 1;
             }
             let number: i64 = input[start..position].parse().unwrap();
@@ -32,9 +33,10 @@ pub fn tokenize(input: &str) -> Vec<Token> {
             '(' => tokens.push(Token::new(TokenKind::LParen, position)),
             ')' => tokens.push(Token::new(TokenKind::RParen, position)),
             ';' => tokens.push(Token::new(TokenKind::Semicolon, position)),
+            ',' => tokens.push(Token::new(TokenKind::Comma, position)),
             'a'..='z' | 'A'..='Z' => {
                 let start = position;
-                while position < input.len() && input.chars().nth(position).unwrap().is_alphanumeric() {
+                while position < bytes.len() && (bytes[position] as char).is_alphanumeric() {
                     position += 1;
                 }
                 let identifier = &input[start..position];
@@ -43,6 +45,7 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                 } else {
                     tokens.push(Token::new(TokenKind::Identifier(identifier.to_string()), start));
                 }
+                continue;
             }
             _ => tokens.push(Token::new(TokenKind::Unknown(current_char), position)),
         }

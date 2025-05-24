@@ -81,7 +81,27 @@ impl<'a> Parser<'a> {
     fn parse_primary(&mut self) -> Result<ASTNode, String> {
         match self.advance().kind.clone() {
             TokenKind::Number(n)     => Ok(ASTNode::NumberLiteral(n)),
-            TokenKind::Identifier(s) => Ok(ASTNode::Identifier(s)),
+            TokenKind::Identifier(s) => {
+                // Check for function call: identifier followed by '('
+                if self.peek_kind() == Some(&TokenKind::LParen) {
+                    self.advance(); // consume '('
+                    let mut args = Vec::new();
+                    if self.peek_kind() != Some(&TokenKind::RParen) {
+                        loop {
+                            let arg = self.parse_expression(0)?;
+                            args.push(Box::new(arg));
+                            if self.peek_kind() == Some(&TokenKind::RParen) {
+                                break;
+                            }
+                            self.consume(TokenKind::Comma, "Expected ',' or ')' in argument list")?;
+                        }
+                    }
+                    self.consume(TokenKind::RParen, "Expected ')' after arguments")?;
+                    Ok(ASTNode::FunctionCall(s, args))
+                } else {
+                    Ok(ASTNode::Identifier(s))
+                }
+            }
             TokenKind::LParen        => {
                 let expr = self.parse_expression(0)?;
                 self.consume(TokenKind::RParen, "Expected ')' after expression")?;
