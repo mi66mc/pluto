@@ -4,6 +4,7 @@ use crate::parser::ast::{ASTNode, ASTNodeTrait};
 use crate::parser::parser::Parser;
 use crate::constants::token::Token;
 use std::fmt;
+use std::io::Write;
 
 #[derive(Clone, Debug)]
 pub enum Value {
@@ -43,7 +44,9 @@ impl<'a> Evaluator<'a> {
         // -----------------------------------------------------
 
         let mut math = HashMap::new();
+
         math.insert("pi".to_string(), Value::Float(std::f64::consts::PI));
+
         math.insert("pow".to_string(), Value::BuiltInFunction(|args| {
             let a = match args.get(0) {
                 Some(Value::Float(f)) => *f,
@@ -63,6 +66,7 @@ impl<'a> Evaluator<'a> {
         // -----------------------------------------------------
         // ------------------   GENERAL ------------------------
         // -----------------------------------------------------
+
         env.insert(
             "print".to_string(),
             Value::BuiltInFunction(|args| {
@@ -92,6 +96,32 @@ impl<'a> Evaluator<'a> {
                 } else {
                     Value::String("UNKNOWN".to_string())
                 }
+            }),
+        );
+
+        env.insert(
+            "input".to_string(), 
+            Value::BuiltInFunction(|args| {
+                let r;
+                if let Some(Value::String(prompt)) = args.get(0) {
+                    let mut input = String::new();
+                    print!("{}", prompt);
+                    let _ = std::io::stdout().flush();
+                    std::io::stdin()
+                        .read_line(&mut input)
+                        .expect("Failed to read line");
+                
+                    r = input.trim().to_string();
+                } else {
+                    let mut input = String::new();
+                    let _ = std::io::stdout().flush();
+                    std::io::stdin()
+                        .read_line(&mut input)
+                        .expect("Failed to read line");
+                
+                    r = input.trim().to_string();
+                }
+                Value::String(r)
             }),
         );
 
@@ -204,7 +234,21 @@ impl<'a> Evaluator<'a> {
                                     }
                                 }
                                 return Err("Index out of bounds".into());
-                            }
+                            },
+                            "to_int" => {
+                                if let Ok(num) = s.parse::<i64>() {
+                                    return Ok(Value::Number(num));
+                                } else {
+                                    return Err(format!("Cannot convert '{}' to int", s));
+                                }
+                            },
+                            "to_float" => {
+                                if let Ok(num) = s.parse::<f64>() {
+                                    return Ok(Value::Float(num));
+                                } else {
+                                    return Err(format!("Cannot convert '{}' to float", s));
+                                }
+                            },
                             _ => {}
                         }
                     }
@@ -337,29 +381,6 @@ impl<'a> Evaluator<'a> {
                 "==" => Ok(Value::Bool(a == b)),
                 "!=" => Ok(Value::Bool(a != b)),
                 _ => Err(format!("Unknown boolean operator: {}", op)),
-            },
-            (Value::Number(a), Value::Number(b)) => match op {
-                "==" => Ok(Value::Bool(a == b)),
-                "!=" => Ok(Value::Bool(a != b)),
-                "<" => Ok(Value::Bool(a < b)),
-                ">" => Ok(Value::Bool(a > b)),
-                "<=" => Ok(Value::Bool(a <= b)),
-                ">=" => Ok(Value::Bool(a >= b)),
-                _ => Err(format!("Unknown number operator: {}", op)),
-            },
-            (Value::Float(a), Value::Float(b)) => match op {
-                "==" => Ok(Value::Bool(a == b)),
-                "!=" => Ok(Value::Bool(a != b)),
-                "<" => Ok(Value::Bool(a < b)),
-                ">" => Ok(Value::Bool(a > b)),
-                "<=" => Ok(Value::Bool(a <= b)),
-                ">=" => Ok(Value::Bool(a >= b)),
-                _ => Err(format!("Unknown float operator: {}", op)),
-            },
-            (Value::String(a), Value::String(b)) => match op {
-                "==" => Ok(Value::Bool(a == b)),
-                "!=" => Ok(Value::Bool(a != b)),
-                _ => Err(format!("Unknown string operator: {}", op)),
             },
             _ => Err("Type error: incompatible types for binary operation".to_string()),
         }

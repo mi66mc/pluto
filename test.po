@@ -26,3 +26,16 @@ if !(5 < 2) {
 } else {
     print("b");
 }
+
+print("abcde".char_at(1));
+
+let first = input("first num: ");
+let second = input("second num: ");
+let sum = first.to_int() + second.to_float();
+print(sum);
+print(type(sum));
+if sum > 10 {
+    print("Grather than 10!");
+} else {
+    print("Less than 10!");
+}
