@@ -76,7 +76,7 @@ impl<'a> Parser<'a> {
             while !self.match_kind(TokenKind::RBrace) && self.current < self.tokens.len() {
                 statements.push(self.parse_statement()?);
             }
-            Ok(ASTNode::Program(statements))
+            Ok(ASTNode::Block(statements))
         } else {
             self.parse_statement()
         }
@@ -89,14 +89,12 @@ impl<'a> Parser<'a> {
     fn parse_expression(&mut self, min_prec: u8) -> Result<ASTNode, String> {
         let mut left = self.parse_primary()?;
 
-        // Assignment to variable or array element
         if self.peek_kind() == Some(&TokenKind::Equal) {
             if let ASTNode::Identifier(ref name) = left {
                 self.advance(); // '='
                 let right = self.parse_expression(0)?;
                 return Ok(ASTNode::Assignment(name.clone(), Box::new(right)));
             }
-            // Assignment to array element: arr[1] = 2
             if let ASTNode::IndexAccess(array, index) = left {
                 self.advance(); // '='
                 let right = self.parse_expression(0)?;

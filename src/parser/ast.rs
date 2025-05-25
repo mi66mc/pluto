@@ -1,6 +1,7 @@
 #[derive(Debug, PartialEq, Clone)]
 pub enum ASTNode {
     Program(Vec<ASTNode>),
+    Block(Vec<ASTNode>),
     VariableDeclaration(String, Option<Box<ASTNode>>),
     Assignment(String, Box<ASTNode>),
     BinaryExpression(Box<ASTNode>, String, Box<ASTNode>),
@@ -29,6 +30,14 @@ pub trait ASTNodeTrait {
 impl ASTNodeTrait for ASTNode {
     fn to_string(&self) -> String {
         match self {
+            ASTNode::Block(statements) => {
+                let mut result = String::new();
+                for statement in statements {
+                    result.push_str(&statement.to_string());
+                    result.push('\n');
+                }
+                result
+            }
             ASTNode::ArrayLiteral(elements) => {
                 let elements_str: Vec<String> = elements.iter().map(|e| e.to_string()).collect();
                 format!("[{}]", elements_str.join(", "))

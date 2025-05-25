@@ -20,6 +20,7 @@
 | Feature                | Description                                      |
 |------------------------|--------------------------------------------------|
 | <b>Variables</b>              | `let` keyword for variable declaration           |
+| <b>Block Scoping</b>          | Variables are scoped to their block              |
 | <b>Arithmetic Expressions</b> | Supports `+`, `-`, `*`, `/`, `%`                 |
 | <b>Floating Point Support</b> | Both integers and floats supported               |
 | <b>String Support</b>         | String literals and concatenation                |
@@ -148,6 +149,7 @@ Or, after building:
 | Syntax                | Example                        | Description                     |
 |-----------------------|--------------------------------|---------------------------------|
 | Variable Declaration  | `let x = 10;`                  | Declare variable `x`            |
+| Block Scope           | `{ let y = 5; print(y); }`     | Variables are scoped to blocks  |
 | Arithmetic            | `let y = x * 2 + 3;`           | Expressions with `+ - * / %`    |
 | String Literal        | `let s = "hello";`             | String assignment               |
 | String Concatenation  | `let t = s + " world";`        | Concatenate strings             |
@@ -225,6 +227,25 @@ Or, after building:
 ### Module Methods
 
 Modules can contain members (constants, functions) accessible via dot notation, e.g. `Math.pi`, `Math.pow(a, b)`.
+
+---
+
+## Notes on Scoping
+
+Pluto uses **block scoping** for variables. This means that variables declared with `let` inside a block (`{ ... }`) are only accessible within that block and its inner blocks. Variables declared in an outer scope are accessible in inner scopes, but not vice versa.
+
+Example:
+
+```pluto
+let x = 1;
+if true {
+    let y = 2;
+    print(x); // 1
+    print(y); // 2
+}
+print(x); // 1
+print(y); // Error: y is not defined
+```
 
 ---
 

@@ -81,15 +81,32 @@ impl fmt::Display for Value {
 
 pub struct Evaluator<'a> {
     parser: Parser<'a>,
-    env: HashMap<String, Value>,
+    pub env_stack: Vec<HashMap<String, Value>>,
 }
 
 impl<'a> Evaluator<'a> {
     pub fn new(tokens: &'a Vec<Token>) -> Self {
         Evaluator {
             parser: Parser::new(tokens),
-            env: default_env(),
+            env_stack: vec![default_env()], // default
         }
+    }
+
+    fn current_env_mut(&mut self) -> &mut HashMap<String, Value> {
+        self.env_stack.last_mut().unwrap()
+    }
+
+    // fn current_env(&self) -> &HashMap<String, Value> {
+    //     self.env_stack.last().unwrap()
+    // }
+
+    fn lookup(&self, name: &str) -> Option<Value> {
+        for env in self.env_stack.iter().rev() {
+            if let Some(val) = env.get(name) {
+                return Some(val.clone());
+            }
+        }
+        None
     }
 
     pub fn evaluate(&mut self) -> Result<Value, String> {
@@ -111,24 +128,35 @@ impl<'a> Evaluator<'a> {
                 Ok(last)
             }
 
+            ASTNode::Block(statements) => {
+                self.env_stack.push(HashMap::new());
+                let mut last = Value::Number(0);
+                for stmt in statements {
+                    last = self.eval(stmt)?;
+                }
+                self.env_stack.pop();
+                Ok(last)
+            }
+
             ASTNode::VariableDeclaration(name, maybe_expr) => {
                 let val = if let Some(expr) = maybe_expr {
                     self.eval(expr)?
                 } else {
                     Value::Number(0)
                 };
-                self.env.insert(name.clone(), val.clone());
+                self.current_env_mut().insert(name.clone(), val.clone());
                 Ok(val)
             }
 
             ASTNode::Assignment(name, expr) => {
                 let new_val = self.eval(expr)?;
-                if let Some(val) = self.env.get_mut(name) {
-                    *val = new_val.clone();
-                    Ok(new_val)
-                } else {
-                    Err(format!("Undefined variable '{}'", name))
+                for env in self.env_stack.iter_mut().rev() {
+                    if let Some(val) = env.get_mut(name) {
+                        *val = new_val.clone();
+                        return Ok(new_val);
+                    }
                 }
+                Err(format!("Undefined variable '{}'", name))
             }
 
             ASTNode::BinaryExpression(left, op, right) => {
@@ -144,17 +172,14 @@ impl<'a> Evaluator<'a> {
             ASTNode::StringLiteral(s) => Ok(Value::String(s.clone())),
 
             ASTNode::Identifier(name) => {
-                self.env
-                    .get(name)
-                    .cloned()
+                self.lookup(name)
                     .ok_or_else(|| format!("Undefined variable '{}'", name))
             }
 
             ASTNode::FunctionCall(name, args) => {
-                if let Some(val) = self.env.get(name) {
+                if let Some(val) = self.lookup(name) {
                     match val {
                         Value::BuiltInFunction(f) => {
-                            let f = *f;
                             let mut arg_values = Vec::new();
                             for arg in args {
                                 arg_values.push(self.eval(arg)?);
@@ -251,7 +276,7 @@ impl<'a> Evaluator<'a> {
                 if let ASTNode::Identifier(var_name) = &**array_expr {
                     let index_val = self.eval(index_expr)?;
                     let value_val = self.eval(value_expr)?;
-                    if let Some(val) = self.env.get_mut(var_name) {
+                    if let Some(val) = self.current_env_mut().get_mut(var_name) {
                         if let Value::Array(arr) = val {
                             if let Value::Number(idx) = index_val {
                                 let idx = idx as usize;

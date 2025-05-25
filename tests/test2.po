@@ -4,3 +4,15 @@ arr[3] = "23";
 print(arr[3], type(arr[3]));
 let x = arr[1];
 print(x);
+
+let y;
+print(y);
+
+if false {
+    y = 5;
+    print(y);
+} else {
+    let por = 10000;
+    let a = 2;
+    print(por);
+}
