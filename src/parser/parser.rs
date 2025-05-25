@@ -89,11 +89,18 @@ impl<'a> Parser<'a> {
     fn parse_expression(&mut self, min_prec: u8) -> Result<ASTNode, String> {
         let mut left = self.parse_primary()?;
 
-        if let ASTNode::Identifier(ref name) = left {
-            if self.peek_kind() == Some(&TokenKind::Equal) {
+        // Assignment to variable or array element
+        if self.peek_kind() == Some(&TokenKind::Equal) {
+            if let ASTNode::Identifier(ref name) = left {
                 self.advance(); // '='
                 let right = self.parse_expression(0)?;
                 return Ok(ASTNode::Assignment(name.clone(), Box::new(right)));
+            }
+            // Assignment to array element: arr[1] = 2
+            if let ASTNode::IndexAccess(array, index) = left {
+                self.advance(); // '='
+                let right = self.parse_expression(0)?;
+                return Ok(ASTNode::AssignmentIndex(array, index, Box::new(right)));
             }
         }
 
@@ -131,6 +138,21 @@ impl<'a> Parser<'a> {
             TokenKind::Float(f)             => ASTNode::FloatLiteral(f),
             TokenKind::Boolean(b)          => ASTNode::BooleanLiteral(b),
             TokenKind::StringLiteral(s)  => ASTNode::StringLiteral(s),
+            TokenKind::LBacket => {
+                let mut elements = Vec::new();
+                if self.peek_kind() != Some(&TokenKind::RBacket) {
+                    loop {
+                        let expr = self.parse_expression(0)?;
+                        elements.push(Box::new(expr));
+                        if self.peek_kind() == Some(&TokenKind::RBacket) {
+                            break;
+                        }
+                        self.consume(TokenKind::Comma, "Expected ',' or ']' in array literal")?;
+                    }
+                }
+                self.consume(TokenKind::RBacket, "Expected ']' after array literal")?;
+                ASTNode::ArrayLiteral(elements)
+            }
             TokenKind::Identifier(s)     => {
                 if self.peek_kind() == Some(&TokenKind::LParen) {
                     self.advance();
@@ -190,6 +212,11 @@ impl<'a> Parser<'a> {
                 } else {
                     node = ASTNode::MemberAccess(Box::new(node), member_name);
                 }
+            } else if self.peek_kind() == Some(&TokenKind::LBacket) {
+                self.advance(); // '['
+                let index_expr = self.parse_expression(0)?;
+                self.consume(TokenKind::RBacket, "Expected ']' after index")?;
+                node = ASTNode::IndexAccess(Box::new(node), Box::new(index_expr));
             } else {
                 break;
             }

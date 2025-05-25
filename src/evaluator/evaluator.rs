@@ -1,10 +1,10 @@
 use std::collections::HashMap;
+use std::fmt;
 
+use crate::builtins::builtins::{default_env, float_methods, number_methods, string_methods};
+use crate::constants::token::Token;
 use crate::parser::ast::{ASTNode, ASTNodeTrait};
 use crate::parser::parser::Parser;
-use crate::constants::token::Token;
-use std::fmt;
-use crate::builtins::builtins::{default_env, string_methods, number_methods, float_methods};
 
 #[derive(Clone, Debug)]
 pub enum Value {
@@ -13,7 +13,8 @@ pub enum Value {
     Float(f64),
     BuiltInFunction(fn(Vec<Value>) -> Value),
     String(String),
-    Module(HashMap<String, Value>)
+    Module(HashMap<String, Value>),
+    Array(Vec<Value>),
     // add more
 }
 
@@ -30,28 +31,28 @@ impl PlutoMethod for Value {
                 } else {
                     return Err(format!("No such method '{}' in module", method));
                 }
-            },
+            }
             Value::String(_) => {
                 if let Some(f) = string_methods().get(method) {
                     f(self, args)
                 } else {
                     Err(format!("No such method '{}' for String", method))
                 }
-            },
+            }
             Value::Number(_) => {
                 if let Some(f) = number_methods().get(method) {
                     f(self, args)
                 } else {
                     Err(format!("No such method '{}' for Number", method))
                 }
-            },
+            }
             Value::Float(_) => {
                 if let Some(f) = float_methods().get(method) {
                     f(self, args)
                 } else {
                     Err(format!("No such method '{}' for Float", method))
                 }
-            },
+            }
             _ => Err(format!("No such method '{}' for this type", method)),
         }
     }
@@ -66,6 +67,7 @@ impl fmt::Display for Value {
             Value::String(s) => write!(f, "{}", s),
             Value::BuiltInFunction(_) => write!(f, "<built-in function>"),
             Value::Module(_) => write!(f, "<module>"),
+            Value::Array(arr) => write!(f, "[{}]", arr.iter().map(|v| v.to_string()).collect::<Vec<_>>().join(", ")),
         }
     }
 }
@@ -132,9 +134,7 @@ impl<'a> Evaluator<'a> {
 
             ASTNode::FloatLiteral(f) => Ok(Value::Float(*f)),
 
-            ASTNode::StringLiteral(s) => {
-                Ok(Value::String(s.clone()))
-            }
+            ASTNode::StringLiteral(s) => Ok(Value::String(s.clone())),
 
             ASTNode::Identifier(name) => {
                 self.env
@@ -164,10 +164,18 @@ impl<'a> Evaluator<'a> {
 
             ASTNode::MethodCall(obj, method, args) => {
                 let obj_val = self.eval(obj)?;
-                let arg_vals = args.iter().map(|a| self.eval(a)).collect::<Result<Vec<_>, _>>()?;
+                let arg_vals = args
+                    .iter()
+                    .map(|a| self.eval(a))
+                    .collect::<Result<Vec<_>, _>>()?;
                 match obj_val.call_method(method, arg_vals) {
                     Ok(result) => Ok(result),
-                    Err(e) => Err(format!("No such method '{}' for '{}': {}", method, obj.to_string(), e)),
+                    Err(e) => Err(format!(
+                        "No such method '{}' for '{}': {}",
+                        method,
+                        obj.to_string(),
+                        e
+                    )),
                 }
             }
 
@@ -178,7 +186,11 @@ impl<'a> Evaluator<'a> {
                         return Ok(val.clone());
                     }
                 }
-                Err(format!("No such member '{}' for '{}'", member, object.to_string()))
+                Err(format!(
+                    "No such member '{}' for '{}'",
+                    member,
+                    object.to_string()
+                ))
             }
 
             ASTNode::BooleanLiteral(b) => Ok(Value::Bool(*b)),
@@ -206,11 +218,54 @@ impl<'a> Evaluator<'a> {
                 }
             }
 
+            ASTNode::ArrayLiteral(elements) => {
+                let mut vals = Vec::new();
+                for el in elements {
+                    vals.push(self.eval(el)?);
+                }
+                Ok(Value::Array(vals))
+            }
+
+            ASTNode::IndexAccess(array_expr, index_expr) => {
+                let array_val = self.eval(array_expr)?;
+                let index_val = self.eval(index_expr)?;
+                match (array_val, index_val) {
+                    (Value::Array(arr), Value::Number(idx)) => {
+                        let idx = idx as usize;
+                        arr.get(idx)
+                            .cloned()
+                            .ok_or_else(|| "Array index out of bounds".to_string())
+                    }
+                    _ => Err("Indexing only supported for arrays with integer indices".to_string()),
+                }
+            }
+
+            ASTNode::AssignmentIndex(array_expr, index_expr, value_expr) => {
+                let mut array_val = self.eval(array_expr)?;
+                let index_val = self.eval(index_expr)?;
+                let value_val = self.eval(value_expr)?;
+                if let Value::Array(ref mut arr) = array_val {
+                    if let Value::Number(idx) = index_val {
+                        let idx = idx as usize;
+                        if idx < arr.len() {
+                            arr[idx] = value_val.clone();
+                            Ok(Value::Array(arr.clone()))
+                        } else {
+                            Err("Array index out of bounds".to_string())
+                        }
+                    } else {
+                        Err("Assignment only supported for arrays with integer indices".to_string())
+                    }
+                } else {
+                    Err("Assignment only supported for arrays with integer indices".to_string())
+                }
+            }
+
             _ => Err("Unsupported AST node".into()),
         }
     }
 
-        fn eval_binary(&self, left: Value, op: &str, right: Value) -> Result<Value, String> {
+    fn eval_binary(&self, left: Value, op: &str, right: Value) -> Result<Value, String> {
         match (left, right) {
             (Value::Number(a), Value::Number(b)) => match op {
                 "+" => Ok(Value::Number(a + b)),

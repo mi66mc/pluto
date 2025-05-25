@@ -156,6 +156,9 @@ pub fn default_env() -> HashMap<String, Value> {
                     Value::Number(_) => Value::String("Number".to_string()),
                     Value::Float(_) => Value::String("Float".to_string()),
                     Value::String(_) => Value::String("String".to_string()),
+                    Value::Array(_) => Value::String("Array".to_string()),
+                    Value::Module(_) => Value::String("Module".to_string()),
+                    Value::BuiltInFunction(_) => Value::String("BuiltInFunction".to_string()),
                     _ => Value::String("UNKNOWN".to_string()),
                 }
             } else {

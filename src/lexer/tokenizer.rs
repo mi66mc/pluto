@@ -38,6 +38,8 @@ pub fn tokenize(input: &str) -> Vec<Token> {
         }
 
         match current_char {
+            '[' => tokens.push(Token::new(TokenKind::LBacket, position)),
+            ']' => tokens.push(Token::new(TokenKind::RBacket, position)),
             '\"' => {
                 let start = position + 1;
                 position += 1;

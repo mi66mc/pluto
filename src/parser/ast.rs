@@ -8,6 +8,7 @@ pub enum ASTNode {
     NumberLiteral(i64),
     FloatLiteral(f64),
     StringLiteral(String),
+    ArrayLiteral(Vec<Box<ASTNode>>),
     Identifier(String),
     FunctionDeclaration(String, Vec<String>, Box<ASTNode>),
     FunctionCall(String, Vec<Box<ASTNode>>),
@@ -17,6 +18,8 @@ pub enum ASTNode {
     MemberAccess(Box<ASTNode>, String), // Math.pi
     MethodCall(Box<ASTNode>, String, Vec<Box<ASTNode>>), // Math.pow(x,y)
     BooleanLiteral(bool),
+    IndexAccess(Box<ASTNode>, Box<ASTNode>),
+    AssignmentIndex(Box<ASTNode>, Box<ASTNode>, Box<ASTNode>), // array, index, value
 }
 
 pub trait ASTNodeTrait {
@@ -26,6 +29,10 @@ pub trait ASTNodeTrait {
 impl ASTNodeTrait for ASTNode {
     fn to_string(&self) -> String {
         match self {
+            ASTNode::ArrayLiteral(elements) => {
+                let elements_str: Vec<String> = elements.iter().map(|e| e.to_string()).collect();
+                format!("[{}]", elements_str.join(", "))
+            }
             ASTNode::UnaryExpression(operator, expression) => {
                 format!("{}{}", operator, expression.to_string())
             }
@@ -81,6 +88,8 @@ impl ASTNodeTrait for ASTNode {
                 format!("{}.{}/{}", object.to_string(), method, args_str.join(", "))
             }
             ASTNode::BooleanLiteral(value) => value.to_string(),
+            ASTNode::IndexAccess(array, index) => format!("{}[{}]", array.to_string(), index.to_string()),
+            ASTNode::AssignmentIndex(array, index, value) => format!("{}[{}] = {}", array.to_string(), index.to_string(), value.to_string()),
         }
     }
 }
