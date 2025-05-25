@@ -48,11 +48,15 @@ impl<'a> Parser<'a> {
             return Err("Expected identifier after 'let'".into());
         };
 
-        self.consume(TokenKind::Equal, "Expected '=' after identifier")?;
-        let initializer = self.parse_expression(0)?;
-        self.consume(TokenKind::Semicolon, "Expected ';' after variable declaration")?;
-
-        Ok(ASTNode::VariableDeclaration(name, Some(Box::new(initializer))))
+        if self.peek_kind() == Some(&TokenKind::Equal) {
+            self.advance(); // '='
+            let expr = self.parse_expression(0)?;
+            self.consume(TokenKind::Semicolon, "Expected ';' after variable declaration")?;
+            Ok(ASTNode::VariableDeclaration(name, Some(Box::new(expr))))
+        } else {
+            self.consume(TokenKind::Semicolon, "Expected ';' after variable declaration")?;
+            Ok(ASTNode::VariableDeclaration(name, None))
+        }
     }
 
     // -----------------------------------------------------
@@ -61,6 +65,14 @@ impl<'a> Parser<'a> {
 
     fn parse_expression(&mut self, min_prec: u8) -> Result<ASTNode, String> {
         let mut left = self.parse_primary()?;
+
+        if let ASTNode::Identifier(ref name) = left {
+            if self.peek_kind() == Some(&TokenKind::Equal) {
+                self.advance(); // '='
+                let right = self.parse_expression(0)?;
+                return Ok(ASTNode::Assignment(name.clone(), Box::new(right)));
+            }
+        }
 
         while let Some(op_prec) = self.current_precedence() {
             if op_prec < min_prec {
@@ -82,8 +94,8 @@ impl<'a> Parser<'a> {
         let mut node = match self.advance().kind.clone() {
             TokenKind::Number(n)            => ASTNode::NumberLiteral(n),
             TokenKind::Float(f)             => ASTNode::FloatLiteral(f),
-            TokenKind::StringLiteral(s)     => ASTNode::StringLiteral(s),
-            TokenKind::Identifier(s)        => {
+            TokenKind::StringLiteral(s)  => ASTNode::StringLiteral(s),
+            TokenKind::Identifier(s)     => {
                 if self.peek_kind() == Some(&TokenKind::LParen) {
                     self.advance();
                     let mut args = Vec::new();

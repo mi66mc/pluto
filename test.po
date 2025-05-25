@@ -11,3 +11,8 @@ print(a.len());
 print(type(a));
 print(a.to_upper());
 print(type(x), type(x.to_string()));
+x = 5;
+print(x);
+let p;
+p = 0213123;
+print(p);

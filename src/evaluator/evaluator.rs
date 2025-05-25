@@ -118,13 +118,25 @@ impl<'a> Evaluator<'a> {
                 Ok(last)
             }
 
-            ASTNode::VariableDeclaration(name, Some(expr)) => {
-                let val = self.eval(expr)?;
+            ASTNode::VariableDeclaration(name, maybe_expr) => {
+                let val = if let Some(expr) = maybe_expr {
+                    self.eval(expr)?
+                } else {
+                    Value::Number(0)
+                };
                 self.env.insert(name.clone(), val.clone());
                 Ok(val)
             }
 
-            ASTNode::VariableDeclaration(_, None) => Ok(Value::Number(0)),
+            ASTNode::Assignment(name, expr) => {
+                let new_val = self.eval(expr)?;
+                if let Some(val) = self.env.get_mut(name) {
+                    *val = new_val.clone();
+                    Ok(new_val)
+                } else {
+                    Err(format!("Undefined variable '{}'", name))
+                }
+            }
 
             ASTNode::BinaryExpression(left, op, right) => {
                 let left_val = self.eval(left)?;
