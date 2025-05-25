@@ -1,6 +1,6 @@
 # Pluto
 
-**Pluto** is an interpreted programming language implemented in Rust. It features a simple syntax, variable declarations, arithmetic expressions, string, float, and boolean support, function calls, method calls, member access, and more. Pluto is designed for learning and experimentation.
+**Pluto** is an interpreted programming language implemented in Rust, designed for learning, experimentation, and rapid prototyping. Pluto features a simple, expressive syntax, dynamic typing, and a growing set of built-in functions and methods. Its extensible architecture allows you to add your own built-ins in Rust.
 
 ---
 
@@ -14,11 +14,12 @@
 | String Support         | String literals and concatenation                |
 | Boolean Support        | `true` and `false` literals, type detection      |
 | Function Calls         | Built-in functions like `print`, `type`, `input` |
-| Method Calls           | Call methods on strings, numbers, modules        |
+| Method Calls           | Call methods on strings, numbers, arrays, etc.   |
 | Member Access          | Access module members (e.g. `Math.pi`)           |
 | If Statements          | Conditional execution with `if` and `else`       |
-| Simple Syntax          | Easy to read and write                           |
+| Arrays                 | Array literals, indexing, and array methods      |
 | Extensible             | Add your own built-in functions in Rust          |
+| Simple Syntax          | Easy to read and write                           |
 
 ---
 
@@ -58,7 +59,7 @@ if sum > 10 {
 }
 ```
 
-**Output:**
+**Sample Output:**
 ```
 10.5
 5.5
@@ -78,7 +79,7 @@ Grather than 10! or Less than 10!
 
 ---
 
-## Types
+## Value Types
 
 Pluto supports the following value types:
 
@@ -88,6 +89,7 @@ Pluto supports the following value types:
 | Float   | 64-bit floating point number       | `let y = 3.14;` |
 | String  | UTF-8 string                       | `let s = "hi";` |
 | Bool    | Boolean (`true` or `false`)        | `let b = true;` |
+| Array   | Ordered collection of values       | `let arr = [1,2,3];` |
 | Module  | Built-in module (e.g. `Math`)      | `Math.pi`       |
 | Function| Built-in function                  | `print(x);`     |
 
@@ -145,38 +147,84 @@ Or, after building:
 | Member Access         | `Math.pi`                      | Access module member            |
 | Method Call           | `"abc".len()`                  | Call method on value            |
 | Input                 | `let s = input("prompt: ");`   | Read user input                 |
+| Array Literal         | `let arr = [1, 2, 3];`         | Array assignment                |
+| Array Indexing        | `arr[0]`                       | Access array element            |
+| Array Assignment      | `arr[0] = 42;`                 | Modify array element            |
 
 ---
 
-## Built-in Functions & Methods
+## Built-in Functions
 
-| Function/Method   | Description                        | Example                |
-|-------------------|------------------------------------|------------------------|
-| print             | Prints arguments to stdout          | `print(x);`            |
-| type              | Returns the type of the argument    | `print(type(x));`      |
-| input             | Reads a line from stdin             | `let s = input();`     |
-| Math.pi           | Returns the value of π              | `print(Math.pi);`      |
-| Math.pow(a,b)     | Raises `a` to the power of `b`      | `print(Math.pow(2,3));`|
-| str.len()         | Returns string length               | `"abc".len()`          |
-| str.to_upper()    | Uppercase string                    | `"abc".to_upper()`     |
-| str.to_lower()    | Lowercase string                    | `"ABC".to_lower()`     |
-| str.char_at(i)    | Char at index `i`                   | `"abc".char_at(1)`     |
-| str.to_int()      | Convert string to integer           | `"42".to_int()`        |
-| str.to_float()    | Convert string to float             | `"3.14".to_float()`    |
-| num.to_string()   | Convert number to string            | `x.to_string()`        |
-| float.to_string() | Convert float to string             | `x.to_string()`        |
-| format            | Format string with arguments        | `format("Hello, {}", name)` |
+| Function         | Description                                 | Example                        |
+|------------------|---------------------------------------------|--------------------------------|
+| print            | Prints arguments to stdout                  | `print(x);`                    |
+| type             | Returns the type of the argument            | `print(type(x));`              |
+| input            | Reads a line from stdin                     | `let s = input();`             |
+| format           | Format string with arguments                | `format("Hello, {}", name)`    |
+| exit             | Exit the interpreter                        | `exit(0);`                     |
+
+---
+
+## Built-in Modules
+
+### Math
+
+| Member         | Description                                 | Example                        |
+|----------------|---------------------------------------------|--------------------------------|
+| Math.pi        | Returns the value of π                      | `print(Math.pi);`              |
+| Math.pow(a, b) | Raises `a` to the power of `b`              | `print(Math.pow(2, 3));`       |
+
+---
+
+## Built-in Methods by Type
+
+### String Methods
+
+| Method           | Description                        | Example                        |
+|------------------|------------------------------------|--------------------------------|
+| len()            | Returns string length              | `"abc".len()`                  |
+| to_upper()       | Uppercase string                   | `"abc".to_upper()"`            |
+| to_lower()       | Lowercase string                   | `"ABC".to_lower()"`            |
+| char_at(i)       | Char at index `i` (as string)      | `"abc".char_at(1)`             |
+| to_int()         | Convert string to integer          | `"42".to_int()"`               |
+| to_float()       | Convert string to float            | `"3.14".to_float()"`           |
+
+### Number Methods
+
+| Method           | Description                        | Example                        |
+|------------------|------------------------------------|--------------------------------|
+| to_string()      | Convert number to string           | `x.to_string()`                |
+
+### Float Methods
+
+| Method           | Description                        | Example                        |
+|------------------|------------------------------------|--------------------------------|
+| to_string()      | Convert float to string            | `x.to_string()`                |
+
+### Array Methods
+
+| Method           | Description                        | Example                        |
+|------------------|------------------------------------|--------------------------------|
+| len()            | Returns array length               | `arr.len()`                    |
+| push(val)        | Returns new array with `val` added | `arr.push(5)`                  |
+| pop()            | Returns new array with last removed| `arr.pop()`                    |
+| remove(i)        | Returns new array with element at index removed| `arr.remove(2)`               |
+| sum()            | Returns sum of numeric elements    | `arr.sum()`                    |
+
+### Module Methods
+
+Modules can contain members (constants, functions) accessible via dot notation, e.g. `Math.pi`, `Math.pow(a, b)`.
 
 ---
 
 ## Contributing
 
-Pull requests and suggestions are welcome!
+Pull requests and suggestions are welcome! Please open an issue or submit a PR if you have ideas for new features, bug fixes, or improvements.
 
 ---
 
 ## License
 
-See [LICENSE](LICENSE).
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
 
 ---

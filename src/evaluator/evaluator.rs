@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::fmt;
 
-use crate::builtins::builtins::{default_env, float_methods, number_methods, string_methods};
+use crate::builtins::builtins::{default_env, float_methods, number_methods, string_methods, array_methods};
 use crate::constants::token::Token;
 use crate::parser::ast::{ASTNode, ASTNodeTrait};
 use crate::parser::parser::Parser;
@@ -51,6 +51,13 @@ impl PlutoMethod for Value {
                     f(self, args)
                 } else {
                     Err(format!("No such method '{}' for Float", method))
+                }
+            }
+            Value::Array(_) => {
+                if let Some(f) = array_methods().get(method) {
+                    f(self, args)
+                } else {
+                    Err(format!("No such method '{}' for Array", method))
                 }
             }
             _ => Err(format!("No such method '{}' for this type", method)),
@@ -241,6 +248,29 @@ impl<'a> Evaluator<'a> {
             }
 
             ASTNode::AssignmentIndex(array_expr, index_expr, value_expr) => {
+                if let ASTNode::Identifier(var_name) = &**array_expr {
+                    let index_val = self.eval(index_expr)?;
+                    let value_val = self.eval(value_expr)?;
+                    if let Some(val) = self.env.get_mut(var_name) {
+                        if let Value::Array(arr) = val {
+                            if let Value::Number(idx) = index_val {
+                                let idx = idx as usize;
+                                if idx < arr.len() {
+                                    arr[idx] = value_val.clone();
+                                    return Ok(Value::Array(arr.clone()));
+                                } else {
+                                    return Err("Array index out of bounds".to_string());
+                                }
+                            } else {
+                                return Err("Assignment only supported for arrays with integer indices".to_string());
+                            }
+                        } else {
+                            return Err(format!("'{}' is not an array", var_name));
+                        }
+                    } else {
+                        return Err(format!("'{}' is not an array", var_name));
+                    }
+                }
                 let mut array_val = self.eval(array_expr)?;
                 let index_val = self.eval(index_expr)?;
                 let value_val = self.eval(value_expr)?;

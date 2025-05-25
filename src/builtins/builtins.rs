@@ -75,6 +75,75 @@ fn number_and_float_to_string(v: &Value, _: Vec<Value>) -> Result<Value, String>
     }
 }
 
+// ------------------------------------------------------
+
+fn array_len(v: &Value, _: Vec<Value>) -> Result<Value, String> {
+    if let Value::Array(arr) = v {
+        Ok(Value::Number(arr.len() as i64))
+    } else {
+        Err("Not an array".into())
+    }
+}
+
+fn array_push(v: &Value, args: Vec<Value>) -> Result<Value, String> {
+    if let Value::Array(arr) = v {
+        let mut new_arr = arr.clone();
+        for arg in args {
+            new_arr.push(arg);
+        }
+        Ok(Value::Array(new_arr))
+    } else {
+        Err("Not an array".into())
+    }
+}
+
+fn array_pop(v: &Value, _: Vec<Value>) -> Result<Value, String> {
+    if let Value::Array(arr) = v {
+        if arr.is_empty() {
+            return Err("Array is empty".into());
+        }
+        let mut new_arr = arr.clone();
+        new_arr.pop();
+        Ok(Value::Array(new_arr))
+    } else {
+        Err("Not an array".into())
+    }
+}
+
+fn array_remove(v: &Value, args: Vec<Value>) -> Result<Value, String> {
+    if let Value::Array(arr) = v {
+        if let Some(Value::Number(n)) = args.get(0) {
+            if *n >= 0 && *n < arr.len() as i64 {
+                let mut new_arr = arr.clone();
+                new_arr.remove(*n as usize);
+                return Ok(Value::Array(new_arr));
+            }
+        }
+        Err("Index out of bounds".into())
+    } else {
+        Err("Not an array".into())
+    }
+}
+
+fn array_sum(v: &Value, _: Vec<Value>) -> Result<Value, String> {
+    if let Value::Array(arr) = v {
+        let sum: f64 = arr.iter().filter_map(|x| {
+            if let Value::Number(n) = x {
+                Some(*n as f64)
+            } else if let Value::Float(f) = x {
+                Some(*f)
+            } else {
+                None
+            }
+        }).sum();
+        Ok(Value::Float(sum))
+    } else {
+        Err("Not an array".into())
+    }
+}
+
+// ------------------------------------------------------
+
 pub fn string_methods() -> HashMap<&'static str, MethodFn> {
     let mut map = HashMap::new();
     map.insert("len", string_len as MethodFn);
@@ -95,6 +164,16 @@ pub fn number_methods() -> HashMap<&'static str, MethodFn> {
 pub fn float_methods() -> HashMap<&'static str, MethodFn> {
     let mut map = HashMap::new();
     map.insert("to_string", number_and_float_to_string as MethodFn);
+    map
+}
+
+pub fn array_methods() -> HashMap<&'static str, MethodFn> {
+    let mut map = HashMap::new();
+    map.insert("len", array_len as MethodFn);
+    map.insert("push", array_push as MethodFn);
+    map.insert("pop", array_pop as MethodFn);
+    map.insert("remove", array_remove as MethodFn);
+    map.insert("sum", array_sum as MethodFn);
     map
 }
 

@@ -1,2 +1,6 @@
 let arr = [0, 3, 2, 9];
 print(arr[3], type(arr));
+arr[3] = "23";
+print(arr[3], type(arr[3]));
+let x = arr[1];
+print(x);
