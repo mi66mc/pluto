@@ -1,7 +1,7 @@
 # Pluto
 
 <p align="center">
-  <img src="./public/logos/Pluto_DARK TEXT.png" alt="Pluto Logo" width="120" style="background: #fff; border-radius: 16px; box-shadow: 0 2px 8px #0002;">
+  <img src="./public/logos/Pluto_DARK TEXT BACKGROUND.png" alt="Pluto Logo" width="120" style="background: #fff; border-radius: 16px; box-shadow: 0 2px 8px #0002; background-color: #fff;"/>
 </p>
 
 <h1 align="center" style="color:#222; font-size:2.8em; font-weight:800; letter-spacing:-2px; margin-bottom:0.2em;">
