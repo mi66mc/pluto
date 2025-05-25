@@ -32,6 +32,8 @@ impl<'a> Parser<'a> {
     fn parse_statement(&mut self) -> Result<ASTNode, String> {
         if self.match_kind(TokenKind::Let) {
             self.parse_variable_declaration()
+        } else if self.match_kind(TokenKind::If) {
+            self.parse_if_statement()
         } else {
             let expr = self.parse_expression(0)?;
             self.consume(TokenKind::Semicolon, "Expected ';' after expression")?;
@@ -56,6 +58,30 @@ impl<'a> Parser<'a> {
         } else {
             self.consume(TokenKind::Semicolon, "Expected ';' after variable declaration")?;
             Ok(ASTNode::VariableDeclaration(name, None))
+        }
+    }
+
+    fn parse_if_statement(&mut self) -> Result<ASTNode, String> {
+        // already consumed 'if'
+        let condition = self.parse_expression(0)?;
+        let then_branch = self.parse_block_or_single_statement()?;
+        let else_branch = if self.match_kind(TokenKind::Identifier("else".to_string())) {
+            Some(Box::new(self.parse_block_or_single_statement()?))
+        } else {
+            None
+        };
+        Ok(ASTNode::IfStatement(Box::new(condition), Box::new(then_branch), else_branch))
+    }
+
+    fn parse_block_or_single_statement(&mut self) -> Result<ASTNode, String> {
+        if self.match_kind(TokenKind::LBrace) {
+            let mut statements = Vec::new();
+            while !self.match_kind(TokenKind::RBrace) && self.current < self.tokens.len() {
+                statements.push(self.parse_statement()?);
+            }
+            Ok(ASTNode::Program(statements))
+        } else {
+            self.parse_statement()
         }
     }
 

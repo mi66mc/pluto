@@ -20,3 +20,9 @@ print(type);
 let abc = true;
 let def = false;
 print(abc, def, type(abc));
+
+if (false) {
+    print("a");
+} else {
+    print("b");
+}

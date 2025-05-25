@@ -60,6 +60,8 @@ pub fn tokenize(input: &str) -> Vec<Token> {
             '=' => tokens.push(Token::new(TokenKind::Equal, position)),
             '(' => tokens.push(Token::new(TokenKind::LParen, position)),
             ')' => tokens.push(Token::new(TokenKind::RParen, position)),
+            '{' => tokens.push(Token::new(TokenKind::LBrace, position)),
+            '}' => tokens.push(Token::new(TokenKind::RBrace, position)),
             ';' => tokens.push(Token::new(TokenKind::Semicolon, position)),
             ',' => tokens.push(Token::new(TokenKind::Comma, position)),
             '.' => tokens.push(Token::new(TokenKind::Dot, position)),
@@ -71,6 +73,8 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                 let identifier = &input[start..position];
                 if identifier == "let" {
                     tokens.push(Token::new(TokenKind::Let, start));
+                } else if identifier == "if" {
+                    tokens.push(Token::new(TokenKind::If, start));
                 } else if identifier == "true" {
                     tokens.push(Token::new(TokenKind::Boolean(true), start));
                 } else if identifier == "false" {

@@ -232,6 +232,21 @@ impl<'a> Evaluator<'a> {
 
             ASTNode::BooleanLiteral(b) => Ok(Value::Bool(*b)),
 
+            ASTNode::IfStatement(condition, then_branch, else_branch) => {
+                let cond_val = self.eval(condition)?;
+                match cond_val {
+                    Value::Bool(true) => self.eval(then_branch),
+                    Value::Bool(false) => {
+                        if let Some(else_b) = else_branch {
+                            self.eval(else_b)
+                        } else {
+                            Ok(Value::Number(0))
+                        }
+                    }
+                    _ => Err("Condition in 'if' must be a boolean".to_string()),
+                }
+            }
+
             _ => Err("Unsupported AST node".into()),
         }
     }
