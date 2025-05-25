@@ -30,6 +30,8 @@ pub enum TokenKind {
     Semicolon,
     Comma,
     Let,
+    Fn,
+    Return,
     If,
     EOF,
     Unknown(char),
@@ -42,6 +44,8 @@ pub trait TokenKindTrait {
 impl TokenKindTrait for TokenKind {
     fn to_string(&self) -> String {
         match self {
+            TokenKind::Return => "return".to_string(),
+            TokenKind::Fn => "fn".to_string(),
             TokenKind::EqualsEqual => "==".to_string(),
             TokenKind::NotEqual => "!=".to_string(),
             TokenKind::LessThan => "<".to_string(),

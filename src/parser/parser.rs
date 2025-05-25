@@ -31,6 +31,10 @@ impl<'a> Parser<'a> {
     fn parse_statement(&mut self) -> Result<ASTNode, String> {
         if self.match_kind(TokenKind::Let) {
             self.parse_variable_declaration()
+        } else if self.match_kind(TokenKind::Return) {
+            self.parse_return_statement()
+        } else if self.match_kind(TokenKind::Fn) {
+            self.parse_function_declaration()
         } else if self.match_kind(TokenKind::If) {
             self.parse_if_statement()
         } else {
@@ -38,6 +42,47 @@ impl<'a> Parser<'a> {
             self.consume(TokenKind::Semicolon, "Expected ';' after expression")?;
             Ok(expr)
         }
+    }
+
+    fn parse_return_statement(&mut self) -> Result<ASTNode, String> {
+        let expr = if self.peek_kind() == Some(&TokenKind::Semicolon) {
+            None
+        } else {
+            Some(Box::new(self.parse_expression(0)?))
+        };
+        self.consume(TokenKind::Semicolon, "Expected ';' after return statement")?;
+        Ok(ASTNode::ReturnStatement(expr))
+    }
+
+    fn parse_function_declaration(&mut self) -> Result<ASTNode, String> {
+        let name = if let Some(TokenKind::Identifier(id)) = self.peek_kind().cloned() {
+            self.advance();
+            id
+        } else {
+            return Err("Expected identifier after 'fn'".into());
+        };
+
+        self.consume(TokenKind::LParen, "Expected '(' after function name")?;
+
+        let mut params = Vec::new();
+        if self.peek_kind() != Some(&TokenKind::RParen) {
+            loop {
+                if let Some(TokenKind::Identifier(param)) = self.peek_kind().cloned() {
+                    params.push(param);
+                    self.advance();
+                } else {
+                    return Err("Expected identifier in function parameters".into());
+                }
+                if self.peek_kind() == Some(&TokenKind::RParen) {
+                    break;
+                }
+                self.consume(TokenKind::Comma, "Expected ',' or ')' in function parameters")?;
+            }
+        }
+
+        self.consume(TokenKind::RParen, "Expected ')' after function parameters")?;
+        let body = self.parse_block_or_single_statement()?;
+        Ok(ASTNode::FunctionDeclaration(name, params, Box::new(body)))
     }
 
     fn parse_variable_declaration(&mut self) -> Result<ASTNode, String> {

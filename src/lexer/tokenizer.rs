@@ -129,6 +129,10 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                 let identifier = &input[start..position];
                 if identifier == "let" {
                     tokens.push(Token::new(TokenKind::Let, start));
+                } else if identifier == "fn" {
+                    tokens.push(Token::new(TokenKind::Fn, start));
+                } else if identifier == "return" {
+                    tokens.push(Token::new(TokenKind::Return, start));
                 } else if identifier == "if" {
                     tokens.push(Token::new(TokenKind::If, start));
                 } else if identifier == "true" {

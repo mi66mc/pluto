@@ -25,7 +25,7 @@
 | <b>Floating Point Support</b> | Both integers and floats supported               |
 | <b>String Support</b>         | String literals and concatenation                |
 | <b>Boolean Support</b>        | `true` and `false` literals, type detection      |
-| <b>Function Calls</b>         | Built-in functions like `print`, `type`, `input` |
+| <b>Function Calls</b>         | Built-in and user-defined functions              |
 | <b>Method Calls</b>           | Call methods on strings, numbers, arrays, etc.   |
 | <b>Member Access</b>          | Access module members (e.g. `Math.pi`)           |
 | <b>If Statements</b>          | Conditional execution with `if` and `else`       |
@@ -69,6 +69,12 @@ if sum > 10 {
 } else {
     print("Less than 10!");
 }
+
+// User-defined function example
+fn sum(a, b) {
+    return a + b;
+}
+print(sum(3, 4));
 ```
 
 **Sample Output:**
@@ -87,6 +93,32 @@ c
 [sum result...]
 [sum type...]
 Grather than 10! or Less than 10!
+7
+```
+
+---
+
+## Functions
+
+Pluto supports user-defined functions using the `fn` keyword. Functions can take parameters and return values using `return`.
+
+### Function Declaration
+
+```pluto
+fn greet(name) {
+    print("Hello, " + name + "!");
+}
+greet("Pluto");
+```
+
+### Function with Return Value
+
+```pluto
+fn add(a, b) {
+    return a + b;
+}
+let result = add(10, 20);
+print(result); // 30
 ```
 
 ---
@@ -154,7 +186,9 @@ Or, after building:
 | String Literal        | `let s = "hello";`             | String assignment               |
 | String Concatenation  | `let t = s + " world";`        | Concatenate strings             |
 | Boolean Literal       | `let b = true;`                | Boolean assignment              |
-| Function Call         | `print(y);`                    | Call built-in function          |
+| Function Call         | `print(y);`                    | Call built-in or user function  |
+| Function Declaration  | `fn add(a, b) { return a + b; }` | Define a function             |
+| Return Statement      | `return x + 1;`                | Return from a function          |
 | Float Support         | `let z = 3.14;`                | Floating point numbers          |
 | If Statement          | `if x > 0 { print(x); }`       | Conditional execution           |
 | Member Access         | `Math.pi`                      | Access module member            |
