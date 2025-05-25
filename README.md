@@ -9,7 +9,7 @@
 | Feature                | Description                                      |
 |------------------------|--------------------------------------------------|
 | Variables              | `let` keyword for variable declaration           |
-| Arithmetic Expressions | Supports `+`, `-`, `*`, `/`                      |
+| Arithmetic Expressions | Supports `+`, `-`, `*`, `/`, `%`                 |
 | Floating Point Support | Both integers and floats supported               |
 | String Support         | String literals and concatenation                |
 | Boolean Support        | `true` and `false` literals, type detection      |
@@ -135,7 +135,7 @@ Or, after building:
 | Syntax                | Example                        | Description                     |
 |-----------------------|--------------------------------|---------------------------------|
 | Variable Declaration  | `let x = 10;`                  | Declare variable `x`            |
-| Arithmetic            | `let y = x * 2 + 3;`           | Expressions with `+ - * /`      |
+| Arithmetic            | `let y = x * 2 + 3;`           | Expressions with `+ - * / %`    |
 | String Literal        | `let s = "hello";`             | String assignment               |
 | String Concatenation  | `let t = s + " world";`        | Concatenate strings             |
 | Boolean Literal       | `let b = true;`                | Boolean assignment              |
@@ -152,18 +152,20 @@ Or, after building:
 
 | Function/Method   | Description                        | Example                |
 |-------------------|------------------------------------|------------------------|
-| print             | Prints arguments to stdout         | `print(x);`            |
-| type              | Returns the type of the argument   | `print(type(x));`      |
-| input             | Reads a line from stdin            | `let s = input();`     |
-| Math.pi           | Returns the value of π             | `print(Math.pi);`      |
-| Math.pow(a,b)     | Raises `a` to the power of `b`     | `print(Math.pow(2,3));`|
-| str.len()         | Returns string length              | `"abc".len()`          |
-| str.to_upper()    | Uppercase string                   | `"abc".to_upper()`     |
-| str.to_lower()    | Lowercase string                   | `"ABC".to_lower()`     |
-| str.char_at(i)    | Char at index `i`                  | `"abc".char_at(1)`     |
-| str.to_int()      | Convert string to integer          | `"42".to_int()`        |
-| str.to_float()    | Convert string to float            | `"3.14".to_float()`    |
-| num.to_string()   | Convert number/float to string     | `x.to_string()`        |
+| print             | Prints arguments to stdout          | `print(x);`            |
+| type              | Returns the type of the argument    | `print(type(x));`      |
+| input             | Reads a line from stdin             | `let s = input();`     |
+| Math.pi           | Returns the value of π              | `print(Math.pi);`      |
+| Math.pow(a,b)     | Raises `a` to the power of `b`      | `print(Math.pow(2,3));`|
+| str.len()         | Returns string length               | `"abc".len()`          |
+| str.to_upper()    | Uppercase string                    | `"abc".to_upper()`     |
+| str.to_lower()    | Lowercase string                    | `"ABC".to_lower()`     |
+| str.char_at(i)    | Char at index `i`                   | `"abc".char_at(1)`     |
+| str.to_int()      | Convert string to integer           | `"42".to_int()`        |
+| str.to_float()    | Convert string to float             | `"3.14".to_float()`    |
+| num.to_string()   | Convert number to string            | `x.to_string()`        |
+| float.to_string() | Convert float to string             | `x.to_string()`        |
+| format            | Format string with arguments        | `format("Hello, {}", name)` |
 
 ---
 

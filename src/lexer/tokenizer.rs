@@ -57,6 +57,7 @@ pub fn tokenize(input: &str) -> Vec<Token> {
             '-' => tokens.push(Token::new(TokenKind::Minus, position)),
             '*' => tokens.push(Token::new(TokenKind::Star, position)),
             '/' => tokens.push(Token::new(TokenKind::Slash, position)),
+            '%' => tokens.push(Token::new(TokenKind::Percent, position)),
             '=' => {
                 if position + 1 < bytes.len() && bytes[position + 1] as char == '=' {
                     tokens.push(Token::new(TokenKind::EqualsEqual, position));

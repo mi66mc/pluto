@@ -120,7 +120,7 @@ impl<'a> Parser<'a> {
             TokenKind::EqualsEqual | TokenKind::NotEqual => Some(3),
             TokenKind::LessThan | TokenKind::GreaterThan | TokenKind::LessThanEqual | TokenKind::GreaterThanEqual => Some(4),
             TokenKind::Plus | TokenKind::Minus => Some(5),
-            TokenKind::Star | TokenKind::Slash => Some(6),
+            TokenKind::Star | TokenKind::Slash | TokenKind::Percent => Some(6),
             _ => None,
         }
     }

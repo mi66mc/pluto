@@ -39,3 +39,8 @@ if sum > 10 {
 } else {
     print("Less than 10!");
 }
+
+print(5.0%3);
+
+let name = input("what your name? ");
+print(format("Hello, {}", name));

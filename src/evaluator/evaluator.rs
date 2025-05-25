@@ -4,7 +4,7 @@ use crate::parser::ast::{ASTNode, ASTNodeTrait};
 use crate::parser::parser::Parser;
 use crate::constants::token::Token;
 use std::fmt;
-use std::io::Write;
+use crate::builtins::builtins::{default_env, string_methods, number_methods, float_methods};
 
 #[derive(Clone, Debug)]
 pub enum Value {
@@ -15,6 +15,46 @@ pub enum Value {
     String(String),
     Module(HashMap<String, Value>)
     // add more
+}
+
+pub trait PlutoMethod {
+    fn call_method(&self, method: &str, args: Vec<Value>) -> Result<Value, String>;
+}
+
+impl PlutoMethod for Value {
+    fn call_method(&self, method: &str, args: Vec<Value>) -> Result<Value, String> {
+        match self {
+            Value::Module(map) => {
+                if let Some(Value::BuiltInFunction(f)) = map.get(method) {
+                    return Ok(f(args));
+                } else {
+                    return Err(format!("No such method '{}' in module", method));
+                }
+            },
+            Value::String(_) => {
+                if let Some(f) = string_methods().get(method) {
+                    f(self, args)
+                } else {
+                    Err(format!("No such method '{}' for String", method))
+                }
+            },
+            Value::Number(_) => {
+                if let Some(f) = number_methods().get(method) {
+                    f(self, args)
+                } else {
+                    Err(format!("No such method '{}' for Number", method))
+                }
+            },
+            Value::Float(_) => {
+                if let Some(f) = float_methods().get(method) {
+                    f(self, args)
+                } else {
+                    Err(format!("No such method '{}' for Float", method))
+                }
+            },
+            _ => Err(format!("No such method '{}' for this type", method)),
+        }
+    }
 }
 
 impl fmt::Display for Value {
@@ -37,98 +77,9 @@ pub struct Evaluator<'a> {
 
 impl<'a> Evaluator<'a> {
     pub fn new(tokens: &'a Vec<Token>) -> Self {
-        let mut env: HashMap<String, Value> = HashMap::new();
-
-        // -----------------------------------------------------
-        // ------------------   BUILTINS   ---------------------
-        // -----------------------------------------------------
-
-        let mut math = HashMap::new();
-
-        math.insert("pi".to_string(), Value::Float(std::f64::consts::PI));
-
-        math.insert("pow".to_string(), Value::BuiltInFunction(|args| {
-            let a = match args.get(0) {
-                Some(Value::Float(f)) => *f,
-                Some(Value::Number(n)) => *n as f64,
-                _ => return Value::Float(0.0),
-            };
-            let b = match args.get(1) {
-                Some(Value::Float(f)) => *f,
-                Some(Value::Number(n)) => *n as f64,
-                _ => return Value::Float(0.0),
-            };
-            Value::Float(a.powf(b))
-        }));
-
-        env.insert("Math".to_string(), Value::Module(math));
-        
-        // -----------------------------------------------------
-        // ------------------   GENERAL ------------------------
-        // -----------------------------------------------------
-
-        env.insert(
-            "print".to_string(),
-            Value::BuiltInFunction(|args| {
-                for arg in args {
-                    match arg {
-                        Value::Number(n)    => println!("{}", n),
-                        Value::Float(f)     => println!("{}", f),
-                        Value::String(s) => println!("{}", s),
-                        _ => println!("{:?}", arg),
-                    }
-                }
-                Value::Number(0)
-            }),
-        );
-
-        env.insert(
-            "type".to_string(),
-            Value::BuiltInFunction(|args| {
-                if let Some(arg) = args.get(0) {
-                    match arg {
-                        Value::Bool(_) => Value::String("Bool".to_string()),
-                        Value::Number(_) => Value::String("Number".to_string()),
-                        Value::Float(_) => Value::String("Float".to_string()),
-                        Value::String(_) => Value::String("String".to_string()),
-                        _ => Value::String("UNKNOWN".to_string()),
-                    }
-                } else {
-                    Value::String("UNKNOWN".to_string())
-                }
-            }),
-        );
-
-        env.insert(
-            "input".to_string(), 
-            Value::BuiltInFunction(|args| {
-                let r;
-                if let Some(Value::String(prompt)) = args.get(0) {
-                    let mut input = String::new();
-                    print!("{}", prompt);
-                    let _ = std::io::stdout().flush();
-                    std::io::stdin()
-                        .read_line(&mut input)
-                        .expect("Failed to read line");
-                
-                    r = input.trim().to_string();
-                } else {
-                    let mut input = String::new();
-                    let _ = std::io::stdout().flush();
-                    std::io::stdin()
-                        .read_line(&mut input)
-                        .expect("Failed to read line");
-                
-                    r = input.trim().to_string();
-                }
-                Value::String(r)
-            }),
-        );
-
-
         Evaluator {
             parser: Parser::new(tokens),
-            env: env,
+            env: default_env(),
         }
     }
 
@@ -213,55 +164,11 @@ impl<'a> Evaluator<'a> {
 
             ASTNode::MethodCall(obj, method, args) => {
                 let obj_val = self.eval(obj)?;
-                match obj_val {
-                    Value::Module(ref map) => {
-                        if let Some(Value::BuiltInFunction(f)) = map.get(method) {
-                            let arg_vals = args.iter().map(|a| self.eval(a)).collect::<Result<Vec<_>, _>>()?;
-                            return Ok(f(arg_vals));
-                        }
-                    }
-                    Value::String(ref s) => {
-                        match method.as_str() {
-                            "len" => return Ok(Value::Number(s.len() as i64)),
-                            "to_upper" => return Ok(Value::String(s.to_uppercase())),
-                            "to_lower" => return Ok(Value::String(s.to_lowercase())),
-                            "char_at" => {
-                                if let Some(arg) = args.get(0) {
-                                    if let Value::Number(index) = self.eval(arg)? {
-                                        if index >= 0 && (index as usize) < s.len() {
-                                            return Ok(Value::String(s.chars().nth(index as usize).unwrap().to_string()));
-                                        }
-                                    }
-                                }
-                                return Err("Index out of bounds".into());
-                            },
-                            "to_int" => {
-                                if let Ok(num) = s.parse::<i64>() {
-                                    return Ok(Value::Number(num));
-                                } else {
-                                    return Err(format!("Cannot convert '{}' to int", s));
-                                }
-                            },
-                            "to_float" => {
-                                if let Ok(num) = s.parse::<f64>() {
-                                    return Ok(Value::Float(num));
-                                } else {
-                                    return Err(format!("Cannot convert '{}' to float", s));
-                                }
-                            },
-                            _ => {}
-                        }
-                    }
-                    Value::Number(_) | Value::Float(_) => {
-                        match method.as_str() {
-                            "to_string" => return Ok(Value::String(obj_val.to_string())),
-                            "type" => return Ok(Value::String("Number".to_string())),
-                            _ => {}
-                        }
-                    }
-                    _ => {}
+                let arg_vals = args.iter().map(|a| self.eval(a)).collect::<Result<Vec<_>, _>>()?;
+                match obj_val.call_method(method, arg_vals) {
+                    Ok(result) => Ok(result),
+                    Err(e) => Err(format!("No such method '{}' for '{}': {}", method, obj.to_string(), e)),
                 }
-                Err(format!("No such method '{}' for '{}'", method, obj.to_string()))
             }
 
             ASTNode::MemberAccess(object, member) => {
@@ -345,12 +252,12 @@ impl<'a> Evaluator<'a> {
                 "*" => Ok(Value::Float(a as f64 * b)),
                 "/" => Ok(Value::Float(a as f64 / b)),
                 "%" => Ok(Value::Float(a as f64 % b)),
-                "==" => Ok(Value::Bool(a as f64 == b)),
-                "!=" => Ok(Value::Bool(a as f64 != b)),
+                "==" => Ok(Value::Bool((a as f64) == b)),
+                "!=" => Ok(Value::Bool((a as f64) != b)),
                 "<" => Ok(Value::Bool((a as f64) < b)),
-                ">" => Ok(Value::Bool(a as f64 > b)),
-                "<=" => Ok(Value::Bool(a as f64 <= b)),
-                ">=" => Ok(Value::Bool(a as f64 >= b)),
+                ">" => Ok(Value::Bool((a as f64) > b)),
+                "<=" => Ok(Value::Bool((a as f64) <= b)),
+                ">=" => Ok(Value::Bool((a as f64) >= b)),
                 _ => Err(format!("Unknown mixed operator: {}", op)),
             },
             (Value::Float(a), Value::Number(b)) => match op {
@@ -371,9 +278,17 @@ impl<'a> Evaluator<'a> {
                 "+" => Ok(Value::String(a + &b.to_string())),
                 _ => Err(format!("Unknown string-number operator: {}", op)),
             },
+            (Value::Number(a), Value::String(b)) => match op {
+                "+" => Ok(Value::String(a.to_string() + &b)),
+                _ => Err(format!("Unknown number-string operator: {}", op)),
+            },
             (Value::String(a), Value::Float(b)) => match op {
                 "+" => Ok(Value::String(a + &b.to_string())),
                 _ => Err(format!("Unknown string-float operator: {}", op)),
+            },
+            (Value::Float(a), Value::String(b)) => match op {
+                "+" => Ok(Value::String(a.to_string() + &b)),
+                _ => Err(format!("Unknown float-string operator: {}", op)),
             },
             (Value::Bool(a), Value::Bool(b)) => match op {
                 "&&" => Ok(Value::Bool(a && b)),

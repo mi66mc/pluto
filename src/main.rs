@@ -3,6 +3,7 @@ mod lexer;
 mod parser;
 mod evaluator;
 mod utils;
+mod builtins;
 
 use utils::args::get_args;
 use std::fs;
