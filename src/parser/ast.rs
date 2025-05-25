@@ -15,6 +15,7 @@ pub enum ASTNode {
     ReturnStatement(Option<Box<ASTNode>>),
     MemberAccess(Box<ASTNode>, String), // Math.pi
     MethodCall(Box<ASTNode>, String, Vec<Box<ASTNode>>), // Math.pow(x,y)
+    BooleanLiteral(bool),
 }
 
 pub trait ASTNodeTrait {
@@ -75,6 +76,7 @@ impl ASTNodeTrait for ASTNode {
                 let args_str: Vec<String> = args.iter().map(|arg| arg.to_string()).collect();
                 format!("{}.{}/{}", object.to_string(), method, args_str.join(", "))
             }
+            ASTNode::BooleanLiteral(value) => value.to_string(),
         }
     }
 }

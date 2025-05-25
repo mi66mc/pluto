@@ -7,6 +7,7 @@ use std::fmt;
 
 #[derive(Clone, Debug)]
 pub enum Value {
+    Bool(bool),
     Number(i64),
     Float(f64),
     BuiltInFunction(fn(Vec<Value>) -> Value),
@@ -18,6 +19,7 @@ pub enum Value {
 impl fmt::Display for Value {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Value::Bool(b) => write!(f, "{}", b),
             Value::Number(n) => write!(f, "{}", n),
             Value::Float(fl) => write!(f, "{}", fl),
             Value::String(s) => write!(f, "{}", s),
@@ -81,6 +83,7 @@ impl<'a> Evaluator<'a> {
             Value::BuiltInFunction(|args| {
                 if let Some(arg) = args.get(0) {
                     match arg {
+                        Value::Bool(_) => Value::String("Bool".to_string()),
                         Value::Number(_) => Value::String("Number".to_string()),
                         Value::Float(_) => Value::String("Float".to_string()),
                         Value::String(_) => Value::String("String".to_string()),
@@ -226,6 +229,8 @@ impl<'a> Evaluator<'a> {
                 }
                 Err(format!("No such member '{}' for '{}'", member, object.to_string()))
             }
+
+            ASTNode::BooleanLiteral(b) => Ok(Value::Bool(*b)),
 
             _ => Err("Unsupported AST node".into()),
         }

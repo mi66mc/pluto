@@ -71,6 +71,10 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                 let identifier = &input[start..position];
                 if identifier == "let" {
                     tokens.push(Token::new(TokenKind::Let, start));
+                } else if identifier == "true" {
+                    tokens.push(Token::new(TokenKind::Boolean(true), start));
+                } else if identifier == "false" {
+                    tokens.push(Token::new(TokenKind::Boolean(false), start));
                 } else {
                     tokens.push(Token::new(TokenKind::Identifier(identifier.to_string()), start));
                 }

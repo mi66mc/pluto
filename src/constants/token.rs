@@ -1,6 +1,7 @@
 #[derive(Debug, PartialEq, Clone)]
 pub enum TokenKind {
     Identifier(String),
+    Boolean(bool),
     Number(i64),
     Float(f64),
     StringLiteral(String),
@@ -29,6 +30,7 @@ impl TokenKindTrait for TokenKind {
             TokenKind::Identifier(name) => name.clone(),
             TokenKind::Number(value) => value.to_string(),
             TokenKind::Float(value) => value.to_string(),
+            TokenKind::Boolean(value) => value.to_string(),
             TokenKind::Dot => ".".to_string(),
             TokenKind::Plus => "+".to_string(),
             TokenKind::Minus => "-".to_string(),

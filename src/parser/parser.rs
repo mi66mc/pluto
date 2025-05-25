@@ -94,6 +94,7 @@ impl<'a> Parser<'a> {
         let mut node = match self.advance().kind.clone() {
             TokenKind::Number(n)            => ASTNode::NumberLiteral(n),
             TokenKind::Float(f)             => ASTNode::FloatLiteral(f),
+            TokenKind::Boolean(b)          => ASTNode::BooleanLiteral(b), // <-- add this line
             TokenKind::StringLiteral(s)  => ASTNode::StringLiteral(s),
             TokenKind::Identifier(s)     => {
                 if self.peek_kind() == Some(&TokenKind::LParen) {

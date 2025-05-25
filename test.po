@@ -16,3 +16,7 @@ print(x);
 let p;
 p = 0213123;
 print(p);
+print(type);
+let abc = true;
+let def = false;
+print(abc, def, type(abc));
