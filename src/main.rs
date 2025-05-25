@@ -42,13 +42,5 @@ fn main() {
     // let ast = parser.parse().unwrap();
     // println!("{:#?}", ast);
     let mut evaluator = evaluator::evaluator::Evaluator::new(&tokens);
-    match evaluator.evaluate() {
-        Ok(result) => {
-            // Optionally print the result
-            // println!("Result: {:?}", result);
-        }
-        Err(e) => {
-            eprintln!("Runtime error: {}", e);
-        }
-    }
+    evaluator.evaluate().unwrap();
 }
