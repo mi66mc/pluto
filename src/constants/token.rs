@@ -5,7 +5,6 @@ pub enum TokenKind {
     Number(i64),
     Float(f64),
     StringLiteral(String),
-    ArrayLiteral(Vec<TokenKind>),
     Dot,
     Plus,
     Minus,
@@ -74,10 +73,6 @@ impl TokenKindTrait for TokenKind {
             TokenKind::Let => "let".to_string(),
             TokenKind::If => "if".to_string(),
             TokenKind::StringLiteral(value) => format!("\"{}\"", value),
-            TokenKind::ArrayLiteral(values) => format!(
-                "[{}]",
-                values.iter().map(|v| v.to_string()).collect::<Vec<_>>().join(", ")
-            ),
             TokenKind::EOF => "EOF".to_string(),
             TokenKind::Unknown(c) => c.to_string(),
         }

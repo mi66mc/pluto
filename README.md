@@ -1,6 +1,17 @@
 # Pluto
 
-**Pluto** is an interpreted programming language implemented in Rust, designed for learning, experimentation, and rapid prototyping. Pluto features a simple, expressive syntax, dynamic typing, and a growing set of built-in functions and methods. Its extensible architecture allows you to add your own built-ins in Rust.
+<p align="center">
+  <img src="./public/logos/Pluto_DARK TEXT.png" alt="Pluto Logo" width="120" style="background: #fff; border-radius: 16px; box-shadow: 0 2px 8px #0002;">
+</p>
+
+<h1 align="center" style="color:#222; font-size:2.8em; font-weight:800; letter-spacing:-2px; margin-bottom:0.2em;">
+  Pluto <span style="font-size:0.6em; font-weight:400; color:#888;">Programming Language</span>
+</h1>
+<p align="center" style="color:#444; font-size:1.2em;">
+  <b>Pluto</b> is a modern interpreted programming language implemented in Rust.<br>
+  Designed for learning, experimentation, and rapid prototyping.<br>
+  <i>Simple syntax. Dynamic typing. Extensible. Fun.</i>
+</p>
 
 ---
 
@@ -8,18 +19,18 @@
 
 | Feature                | Description                                      |
 |------------------------|--------------------------------------------------|
-| Variables              | `let` keyword for variable declaration           |
-| Arithmetic Expressions | Supports `+`, `-`, `*`, `/`, `%`                 |
-| Floating Point Support | Both integers and floats supported               |
-| String Support         | String literals and concatenation                |
-| Boolean Support        | `true` and `false` literals, type detection      |
-| Function Calls         | Built-in functions like `print`, `type`, `input` |
-| Method Calls           | Call methods on strings, numbers, arrays, etc.   |
-| Member Access          | Access module members (e.g. `Math.pi`)           |
-| If Statements          | Conditional execution with `if` and `else`       |
-| Arrays                 | Array literals, indexing, and array methods      |
-| Extensible             | Add your own built-in functions in Rust          |
-| Simple Syntax          | Easy to read and write                           |
+| <b>Variables</b>              | `let` keyword for variable declaration           |
+| <b>Arithmetic Expressions</b> | Supports `+`, `-`, `*`, `/`, `%`                 |
+| <b>Floating Point Support</b> | Both integers and floats supported               |
+| <b>String Support</b>         | String literals and concatenation                |
+| <b>Boolean Support</b>        | `true` and `false` literals, type detection      |
+| <b>Function Calls</b>         | Built-in functions like `print`, `type`, `input` |
+| <b>Method Calls</b>           | Call methods on strings, numbers, arrays, etc.   |
+| <b>Member Access</b>          | Access module members (e.g. `Math.pi`)           |
+| <b>If Statements</b>          | Conditional execution with `if` and `else`       |
+| <b>Arrays</b>                 | Array literals, indexing, assignment, methods    |
+| <b>Extensible</b>             | Add your own built-in functions in Rust          |
+| <b>Simple Syntax</b>          | Easy to read and write                           |
 
 ---
 

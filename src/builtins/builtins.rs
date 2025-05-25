@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use crate::{evaluator::evaluator::Value, utils::args};
+use crate::{evaluator::evaluator::Value};
 use std::io::Write;
 
 pub type MethodFn = fn(&Value, Vec<Value>) -> Result<Value, String>;
@@ -238,7 +238,6 @@ pub fn default_env() -> HashMap<String, Value> {
                     Value::Array(_) => Value::String("Array".to_string()),
                     Value::Module(_) => Value::String("Module".to_string()),
                     Value::BuiltInFunction(_) => Value::String("BuiltInFunction".to_string()),
-                    _ => Value::String("UNKNOWN".to_string()),
                 }
             } else {
                 Value::String("UNKNOWN".to_string())
