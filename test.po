@@ -21,7 +21,7 @@ let abc = true;
 let def = false;
 print(abc, def, type(abc));
 
-if (false) {
+if !(5 < 2) {
     print("a");
 } else {
     print("b");

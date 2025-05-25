@@ -57,7 +57,60 @@ pub fn tokenize(input: &str) -> Vec<Token> {
             '-' => tokens.push(Token::new(TokenKind::Minus, position)),
             '*' => tokens.push(Token::new(TokenKind::Star, position)),
             '/' => tokens.push(Token::new(TokenKind::Slash, position)),
-            '=' => tokens.push(Token::new(TokenKind::Equal, position)),
+            '=' => {
+                if position + 1 < bytes.len() && bytes[position + 1] as char == '=' {
+                    tokens.push(Token::new(TokenKind::EqualsEqual, position));
+                    position += 2;
+                    continue;
+                } else {
+                    tokens.push(Token::new(TokenKind::Equal, position));
+                }
+            }
+            '!' => {
+                if position + 1 < bytes.len() && bytes[position + 1] as char == '=' {
+                    tokens.push(Token::new(TokenKind::NotEqual, position));
+                    position += 2;
+                    continue;
+                } else {
+                    tokens.push(Token::new(TokenKind::Not, position));
+                }
+            }
+            '<' => {
+                if position + 1 < bytes.len() && bytes[position + 1] as char == '=' {
+                    tokens.push(Token::new(TokenKind::LessThanEqual, position));
+                    position += 2;
+                    continue;
+                } else {
+                    tokens.push(Token::new(TokenKind::LessThan, position));
+                }
+            }
+            '>' => {
+                if position + 1 < bytes.len() && bytes[position + 1] as char == '=' {
+                    tokens.push(Token::new(TokenKind::GreaterThanEqual, position));
+                    position += 2;
+                    continue;
+                } else {
+                    tokens.push(Token::new(TokenKind::GreaterThan, position));
+                }
+            }
+            '&' => {
+                if position + 1 < bytes.len() && bytes[position + 1] as char == '&' {
+                    tokens.push(Token::new(TokenKind::And, position));
+                    position += 2;
+                    continue;
+                } else {
+                    tokens.push(Token::new(TokenKind::Unknown('&'), position));
+                }
+            }
+            '|' => {
+                if position + 1 < bytes.len() && bytes[position + 1] as char == '|' {
+                    tokens.push(Token::new(TokenKind::Or, position));
+                    position += 2;
+                    continue;
+                } else {
+                    tokens.push(Token::new(TokenKind::Unknown('|'), position));
+                }
+            }
             '(' => tokens.push(Token::new(TokenKind::LParen, position)),
             ')' => tokens.push(Token::new(TokenKind::RParen, position)),
             '{' => tokens.push(Token::new(TokenKind::LBrace, position)),

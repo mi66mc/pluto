@@ -4,6 +4,7 @@ pub enum ASTNode {
     VariableDeclaration(String, Option<Box<ASTNode>>),
     Assignment(String, Box<ASTNode>),
     BinaryExpression(Box<ASTNode>, String, Box<ASTNode>),
+    UnaryExpression(String, Box<ASTNode>),
     NumberLiteral(i64),
     FloatLiteral(f64),
     StringLiteral(String),
@@ -25,6 +26,9 @@ pub trait ASTNodeTrait {
 impl ASTNodeTrait for ASTNode {
     fn to_string(&self) -> String {
         match self {
+            ASTNode::UnaryExpression(operator, expression) => {
+                format!("{}{}", operator, expression.to_string())
+            }
             ASTNode::Program(statements) => {
                 let mut result = String::new();
                 for statement in statements {

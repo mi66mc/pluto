@@ -11,7 +11,6 @@ impl<'a> Parser<'a> {
         Parser { tokens, current: 0 }
     }
 
-    /// Programa completo (múltiplas declarações/expressões)
     pub fn parse(&mut self) -> Result<ASTNode, String> {
         let mut statements = Vec::new();
 
@@ -42,7 +41,6 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_variable_declaration(&mut self) -> Result<ASTNode, String> {
-        // já consumiu 'let'
         let name = if let Some(TokenKind::Identifier(id)) = self.peek_kind().cloned() {
             self.advance();
             id
@@ -62,7 +60,6 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_if_statement(&mut self) -> Result<ASTNode, String> {
-        // already consumed 'if'
         let condition = self.parse_expression(0)?;
         let then_branch = self.parse_block_or_single_statement()?;
         let else_branch = if self.match_kind(TokenKind::Identifier("else".to_string())) {
@@ -116,11 +113,23 @@ impl<'a> Parser<'a> {
         Ok(left)
     }
 
+    fn current_precedence(&self) -> Option<u8> {
+        match self.peek_kind()? {
+            TokenKind::Or => Some(1),
+            TokenKind::And => Some(2),
+            TokenKind::EqualsEqual | TokenKind::NotEqual => Some(3),
+            TokenKind::LessThan | TokenKind::GreaterThan | TokenKind::LessThanEqual | TokenKind::GreaterThanEqual => Some(4),
+            TokenKind::Plus | TokenKind::Minus => Some(5),
+            TokenKind::Star | TokenKind::Slash => Some(6),
+            _ => None,
+        }
+    }
+
     fn parse_primary(&mut self) -> Result<ASTNode, String> {
         let mut node = match self.advance().kind.clone() {
             TokenKind::Number(n)            => ASTNode::NumberLiteral(n),
             TokenKind::Float(f)             => ASTNode::FloatLiteral(f),
-            TokenKind::Boolean(b)          => ASTNode::BooleanLiteral(b), // <-- add this line
+            TokenKind::Boolean(b)          => ASTNode::BooleanLiteral(b),
             TokenKind::StringLiteral(s)  => ASTNode::StringLiteral(s),
             TokenKind::Identifier(s)     => {
                 if self.peek_kind() == Some(&TokenKind::LParen) {
@@ -146,6 +155,10 @@ impl<'a> Parser<'a> {
                 let expr = self.parse_expression(0)?;
                 self.consume(TokenKind::RParen, "Expected ')' after expression")?;
                 expr
+            }
+            TokenKind::Not => {
+                let expr = self.parse_primary()?;
+                ASTNode::UnaryExpression("!".to_string(), Box::new(expr))
             }
             other => return Err(format!("Unexpected token: {:?}", other)),
         };
@@ -188,14 +201,6 @@ impl<'a> Parser<'a> {
     // -----------------------------------------------------
     // ------------------   HELPERS      -------------------
     // -----------------------------------------------------
-
-    fn current_precedence(&self) -> Option<u8> {
-        match self.peek_kind()? {
-            TokenKind::Plus | TokenKind::Minus => Some(1),
-            TokenKind::Star | TokenKind::Slash => Some(2),
-            _ => None,
-        }
-    }
 
     fn match_kind(&mut self, kind: TokenKind) -> bool {
         if self.peek_kind() == Some(&kind) {

@@ -144,7 +144,7 @@ impl<'a> Evaluator<'a> {
             ASTNode::BinaryExpression(left, op, right) => {
                 let left_val = self.eval(left)?;
                 let right_val = self.eval(right)?;
-                Ok(self.eval_binary(left_val, op, right_val))
+                self.eval_binary(left_val, op, right_val)
             }
 
             ASTNode::NumberLiteral(n) => Ok(Value::Number(*n)),
@@ -247,52 +247,121 @@ impl<'a> Evaluator<'a> {
                 }
             }
 
+            ASTNode::UnaryExpression(op, expr) => {
+                let val = self.eval(expr)?;
+                match (op.as_str(), val) {
+                    ("!", Value::Bool(b)) => Ok(Value::Bool(!b)),
+                    _ => Err("Unsupported unary operation".to_string()),
+                }
+            }
+
             _ => Err("Unsupported AST node".into()),
         }
     }
 
-    fn eval_binary(&self, left: Value, op: &str, right: Value) -> Value {
+        fn eval_binary(&self, left: Value, op: &str, right: Value) -> Result<Value, String> {
         match (left, right) {
             (Value::Number(a), Value::Number(b)) => match op {
-                "+" => Value::Number(a + b),
-                "-" => Value::Number(a - b),
-                "*" => Value::Number(a * b),
-                _ => panic!("Unknown operator"),
-            },
-            (Value::Number(a), Value::Float(b)) => match op {
-                "+" => Value::Float(a as f64 + b),
-                "-" => Value::Float(a as f64 - b),
-                "*" => Value::Float(a as f64 * b),
-                "/" => Value::Float(a as f64 / b),
-                _ => panic!("Unknown operator"),
-            },
-            (Value::Float(a), Value::Number(b)) => match op {
-                "+" => Value::Float(a + b as f64),
-                "-" => Value::Float(a - b as f64),
-                "*" => Value::Float(a * b as f64),
-                "/" => Value::Float(a / b as f64),
-                _ => panic!("Unknown operator"),
+                "+" => Ok(Value::Number(a + b)),
+                "-" => Ok(Value::Number(a - b)),
+                "*" => Ok(Value::Number(a * b)),
+                "/" => Ok(Value::Number(a / b)),
+                "%" => Ok(Value::Number(a % b)),
+                "==" => Ok(Value::Bool(a == b)),
+                "!=" => Ok(Value::Bool(a != b)),
+                "<" => Ok(Value::Bool(a < b)),
+                ">" => Ok(Value::Bool(a > b)),
+                "<=" => Ok(Value::Bool(a <= b)),
+                ">=" => Ok(Value::Bool(a >= b)),
+                _ => Err(format!("Unknown number operator: {}", op)),
             },
             (Value::Float(a), Value::Float(b)) => match op {
-                "+" => Value::Float(a + b),
-                "-" => Value::Float(a - b),
-                "*" => Value::Float(a * b),
-                "/" => Value::Float(a / b),
-                _ => panic!("Unknown operator"),
+                "+" => Ok(Value::Float(a + b)),
+                "-" => Ok(Value::Float(a - b)),
+                "*" => Ok(Value::Float(a * b)),
+                "/" => Ok(Value::Float(a / b)),
+                "%" => Ok(Value::Float(a % b)),
+                "==" => Ok(Value::Bool(a == b)),
+                "!=" => Ok(Value::Bool(a != b)),
+                "<" => Ok(Value::Bool(a < b)),
+                ">" => Ok(Value::Bool(a > b)),
+                "<=" => Ok(Value::Bool(a <= b)),
+                ">=" => Ok(Value::Bool(a >= b)),
+                _ => Err(format!("Unknown float operator: {}", op)),
             },
             (Value::String(a), Value::String(b)) => match op {
-                "+" => Value::String(a + &b),
-                _ => panic!("Unknown operator"),
+                "+" => Ok(Value::String(a + &b)),
+                "==" => Ok(Value::Bool(a == b)),
+                "!=" => Ok(Value::Bool(a != b)),
+                _ => Err(format!("Unknown string operator: {}", op)),
+            },
+            (Value::Number(a), Value::Float(b)) => match op {
+                "+" => Ok(Value::Float(a as f64 + b)),
+                "-" => Ok(Value::Float(a as f64 - b)),
+                "*" => Ok(Value::Float(a as f64 * b)),
+                "/" => Ok(Value::Float(a as f64 / b)),
+                "%" => Ok(Value::Float(a as f64 % b)),
+                "==" => Ok(Value::Bool(a as f64 == b)),
+                "!=" => Ok(Value::Bool(a as f64 != b)),
+                "<" => Ok(Value::Bool((a as f64) < b)),
+                ">" => Ok(Value::Bool(a as f64 > b)),
+                "<=" => Ok(Value::Bool(a as f64 <= b)),
+                ">=" => Ok(Value::Bool(a as f64 >= b)),
+                _ => Err(format!("Unknown mixed operator: {}", op)),
+            },
+            (Value::Float(a), Value::Number(b)) => match op {
+                "+" => Ok(Value::Float(a + b as f64)),
+                "-" => Ok(Value::Float(a - b as f64)),
+                "*" => Ok(Value::Float(a * b as f64)),
+                "/" => Ok(Value::Float(a / b as f64)),
+                "%" => Ok(Value::Float(a % b as f64)),
+                "==" => Ok(Value::Bool(a == b as f64)),
+                "!=" => Ok(Value::Bool(a != b as f64)),
+                "<" => Ok(Value::Bool(a < b as f64)),
+                ">" => Ok(Value::Bool(a > b as f64)),
+                "<=" => Ok(Value::Bool(a <= b as f64)),
+                ">=" => Ok(Value::Bool(a >= b as f64)),
+                _ => Err(format!("Unknown mixed operator: {}", op)),
             },
             (Value::String(a), Value::Number(b)) => match op {
-                "+" => Value::String(a + &b.to_string()),
-                _ => panic!("Unknown operator"),
+                "+" => Ok(Value::String(a + &b.to_string())),
+                _ => Err(format!("Unknown string-number operator: {}", op)),
             },
             (Value::String(a), Value::Float(b)) => match op {
-                "+" => Value::String(a + &b.to_string()),
-                _ => panic!("Unknown operator"),
-            }
-            _ => panic!("Type error"),
+                "+" => Ok(Value::String(a + &b.to_string())),
+                _ => Err(format!("Unknown string-float operator: {}", op)),
+            },
+            (Value::Bool(a), Value::Bool(b)) => match op {
+                "&&" => Ok(Value::Bool(a && b)),
+                "||" => Ok(Value::Bool(a || b)),
+                "==" => Ok(Value::Bool(a == b)),
+                "!=" => Ok(Value::Bool(a != b)),
+                _ => Err(format!("Unknown boolean operator: {}", op)),
+            },
+            (Value::Number(a), Value::Number(b)) => match op {
+                "==" => Ok(Value::Bool(a == b)),
+                "!=" => Ok(Value::Bool(a != b)),
+                "<" => Ok(Value::Bool(a < b)),
+                ">" => Ok(Value::Bool(a > b)),
+                "<=" => Ok(Value::Bool(a <= b)),
+                ">=" => Ok(Value::Bool(a >= b)),
+                _ => Err(format!("Unknown number operator: {}", op)),
+            },
+            (Value::Float(a), Value::Float(b)) => match op {
+                "==" => Ok(Value::Bool(a == b)),
+                "!=" => Ok(Value::Bool(a != b)),
+                "<" => Ok(Value::Bool(a < b)),
+                ">" => Ok(Value::Bool(a > b)),
+                "<=" => Ok(Value::Bool(a <= b)),
+                ">=" => Ok(Value::Bool(a >= b)),
+                _ => Err(format!("Unknown float operator: {}", op)),
+            },
+            (Value::String(a), Value::String(b)) => match op {
+                "==" => Ok(Value::Bool(a == b)),
+                "!=" => Ok(Value::Bool(a != b)),
+                _ => Err(format!("Unknown string operator: {}", op)),
+            },
+            _ => Err("Type error: incompatible types for binary operation".to_string()),
         }
     }
 }
