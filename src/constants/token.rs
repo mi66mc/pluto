@@ -31,6 +31,9 @@ pub enum TokenKind {
     Comma,
     Let,
     Fn,
+    While,
+    Break,
+    Continue,
     Return,
     If,
     EOF,
@@ -44,6 +47,9 @@ pub trait TokenKindTrait {
 impl TokenKindTrait for TokenKind {
     fn to_string(&self) -> String {
         match self {
+            TokenKind::Break => "break".to_string(),
+            TokenKind::Continue => "continue".to_string(),
+            TokenKind::While => "while".to_string(),
             TokenKind::Return => "return".to_string(),
             TokenKind::Fn => "fn".to_string(),
             TokenKind::EqualsEqual => "==".to_string(),

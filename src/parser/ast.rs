@@ -21,6 +21,8 @@ pub enum ASTNode {
     BooleanLiteral(bool),
     IndexAccess(Box<ASTNode>, Box<ASTNode>),
     AssignmentIndex(Box<ASTNode>, Box<ASTNode>, Box<ASTNode>), // array, index, value
+    Break,
+    Continue,
 }
 
 pub trait ASTNodeTrait {
@@ -99,6 +101,8 @@ impl ASTNodeTrait for ASTNode {
             ASTNode::BooleanLiteral(value) => value.to_string(),
             ASTNode::IndexAccess(array, index) => format!("{}[{}]", array.to_string(), index.to_string()),
             ASTNode::AssignmentIndex(array, index, value) => format!("{}[{}] = {}", array.to_string(), index.to_string(), value.to_string()),
+            ASTNode::Break => "break".to_string(),
+            ASTNode::Continue => "continue".to_string(),
         }
     }
 }

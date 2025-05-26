@@ -6,10 +6,13 @@ use crate::constants::token::Token;
 use crate::parser::ast::{ASTNode, ASTNodeTrait};
 use crate::parser::parser::Parser;
 
+#[allow(dead_code)]
 #[derive(Clone, Debug)]
 enum EvalResult {
     Value(Value),
     Return(Value),
+    Break,
+    Continue,
 }
 
 #[derive(Clone, Debug)]
@@ -128,7 +131,9 @@ impl<'a> Evaluator<'a> {
         let ast = self.parser.parse()?;
         match self.eval(&ast)? {
             EvalResult::Value(val) => Ok(val),
-            EvalResult::Return(val) => Ok(val),
+            EvalResult::Return(_) => Err("Unexpected 'return' outside of function".to_string()),
+            EvalResult::Break => Err("Unexpected 'break' outside of loop".to_string()),
+            EvalResult::Continue => Err("Unexpected 'continue' outside of loop".to_string()),
         }
     }
 
@@ -144,6 +149,8 @@ impl<'a> Evaluator<'a> {
                     match self.eval(stmt)? {
                         EvalResult::Value(val) => last = val,
                         EvalResult::Return(val) => return Ok(EvalResult::Return(val)),
+                        EvalResult::Break => return Ok(EvalResult::Break),
+                        EvalResult::Continue => return Ok(EvalResult::Continue),
                     }
                 }
                 Ok(EvalResult::Value(last))
@@ -159,6 +166,14 @@ impl<'a> Evaluator<'a> {
                             self.env_stack.pop();
                             return Ok(EvalResult::Return(val));
                         }
+                        EvalResult::Break => {
+                            self.env_stack.pop();
+                            return Ok(EvalResult::Break);
+                        }
+                        EvalResult::Continue => {
+                            self.env_stack.pop();
+                            return Ok(EvalResult::Continue);
+                        }
                     }
                 }
                 self.env_stack.pop();
@@ -170,6 +185,8 @@ impl<'a> Evaluator<'a> {
                     match self.eval(expr)? {
                         EvalResult::Value(v) => v,
                         EvalResult::Return(v) => return Ok(EvalResult::Return(v)),
+                        EvalResult::Break => return Ok(EvalResult::Break),
+                        EvalResult::Continue => return Ok(EvalResult::Continue),
                     }
                 } else {
                     Value::Number(0)
@@ -182,6 +199,8 @@ impl<'a> Evaluator<'a> {
                 let value = match self.eval(expr)? {
                     EvalResult::Value(v) => v,
                     EvalResult::Return(v) => return Ok(EvalResult::Return(v)),
+                    EvalResult::Break => return Ok(EvalResult::Break),
+                    EvalResult::Continue => return Ok(EvalResult::Continue),
                 };
                 for env in self.env_stack.iter_mut().rev() {
                     if let Some(val) = env.get_mut(name) {
@@ -196,10 +215,14 @@ impl<'a> Evaluator<'a> {
                 let left_val = match self.eval(left)? {
                     EvalResult::Value(v) => v,
                     EvalResult::Return(v) => return Ok(EvalResult::Return(v)),
+                    EvalResult::Break => return Ok(EvalResult::Break),
+                    EvalResult::Continue => return Ok(EvalResult::Continue),
                 };
                 let right_val = match self.eval(right)? {
                     EvalResult::Value(v) => v,
                     EvalResult::Return(v) => return Ok(EvalResult::Return(v)),
+                    EvalResult::Break => return Ok(EvalResult::Break),
+                    EvalResult::Continue => return Ok(EvalResult::Continue),
                 };
                 Ok(EvalResult::Value(self.eval_binary(left_val, op, right_val)?))
             }
@@ -227,6 +250,8 @@ impl<'a> Evaluator<'a> {
                                 let v = match self.eval(arg)? {
                                     EvalResult::Value(v) => v,
                                     EvalResult::Return(v) => return Ok(EvalResult::Return(v)),
+                                    EvalResult::Break => return Ok(EvalResult::Break),
+                                    EvalResult::Continue => return Ok(EvalResult::Continue),
                                 };
                                 arg_values.push(v);
                             }
@@ -243,6 +268,8 @@ impl<'a> Evaluator<'a> {
                                 let v = match self.eval(arg)? {
                                     EvalResult::Value(v) => v,
                                     EvalResult::Return(v) => return Ok(EvalResult::Return(v)),
+                                    EvalResult::Break => return Ok(EvalResult::Break),
+                                    EvalResult::Continue => return Ok(EvalResult::Continue),
                                 };
                                 local_env.insert(param.clone(), v);
                             }
@@ -256,6 +283,8 @@ impl<'a> Evaluator<'a> {
                             match result {
                                 EvalResult::Return(val) => Ok(EvalResult::Value(val)),
                                 EvalResult::Value(val) => Ok(EvalResult::Value(val)),
+                                EvalResult::Break => return Ok(EvalResult::Break),
+                                EvalResult::Continue => return Ok(EvalResult::Continue),
                             }
                         }
                         _ => Err(format!("'{}' is not a function", name)),
@@ -269,12 +298,16 @@ impl<'a> Evaluator<'a> {
                 let obj_val = match self.eval(obj)? {
                     EvalResult::Value(v) => v,
                     EvalResult::Return(v) => return Ok(EvalResult::Return(v)),
+                    EvalResult::Break => return Ok(EvalResult::Break),
+                    EvalResult::Continue => return Ok(EvalResult::Continue),
                 };
                 let mut arg_vals = Vec::new();
                 for a in args {
                     let v = match self.eval(a)? {
                         EvalResult::Value(v) => v,
                         EvalResult::Return(v) => return Ok(EvalResult::Return(v)),
+                        EvalResult::Break => return Ok(EvalResult::Break),
+                        EvalResult::Continue => return Ok(EvalResult::Continue),
                     };
                     arg_vals.push(v);
                 }
@@ -293,6 +326,8 @@ impl<'a> Evaluator<'a> {
                 let obj_val = match self.eval(object)? {
                     EvalResult::Value(v) => v,
                     EvalResult::Return(v) => return Ok(EvalResult::Return(v)),
+                    EvalResult::Break => return Ok(EvalResult::Break),
+                    EvalResult::Continue => return Ok(EvalResult::Continue),
                 };
                 if let Value::Module(ref map) = obj_val {
                     if let Some(val) = map.get(member) {
@@ -312,6 +347,8 @@ impl<'a> Evaluator<'a> {
                 let cond_val = match self.eval(condition)? {
                     EvalResult::Value(v) => v,
                     EvalResult::Return(v) => return Ok(EvalResult::Return(v)),
+                    EvalResult::Break => return Ok(EvalResult::Break),
+                    EvalResult::Continue => return Ok(EvalResult::Continue),
                 };
                 match cond_val {
                     Value::Bool(true) => self.eval(then_branch),
@@ -330,6 +367,8 @@ impl<'a> Evaluator<'a> {
                 let val = match self.eval(expr)? {
                     EvalResult::Value(v) => v,
                     EvalResult::Return(v) => return Ok(EvalResult::Return(v)),
+                    EvalResult::Break => return Ok(EvalResult::Break),
+                    EvalResult::Continue => return Ok(EvalResult::Continue),
                 };
                 match (op.as_str(), val) {
                     ("!", Value::Bool(b)) => Ok(EvalResult::Value(Value::Bool(!b))),
@@ -343,6 +382,8 @@ impl<'a> Evaluator<'a> {
                     let v = match self.eval(el)? {
                         EvalResult::Value(v) => v,
                         EvalResult::Return(v) => return Ok(EvalResult::Return(v)),
+                        EvalResult::Break => return Ok(EvalResult::Break),
+                        EvalResult::Continue => return Ok(EvalResult::Continue),
                     };
                     vals.push(v);
                 }
@@ -353,10 +394,14 @@ impl<'a> Evaluator<'a> {
                 let array_val = match self.eval(array_expr)? {
                     EvalResult::Value(v) => v,
                     EvalResult::Return(v) => return Ok(EvalResult::Return(v)),
+                    EvalResult::Break => return Ok(EvalResult::Break),
+                    EvalResult::Continue => return Ok(EvalResult::Continue),
                 };
                 let index_val = match self.eval(index_expr)? {
                     EvalResult::Value(v) => v,
                     EvalResult::Return(v) => return Ok(EvalResult::Return(v)),
+                    EvalResult::Break => return Ok(EvalResult::Break),
+                    EvalResult::Continue => return Ok(EvalResult::Continue),
                 };
                 match (array_val, index_val) {
                     (Value::Array(arr), Value::Number(idx)) => {
@@ -375,10 +420,14 @@ impl<'a> Evaluator<'a> {
                     let index_val = match self.eval(index_expr)? {
                         EvalResult::Value(v) => v,
                         EvalResult::Return(v) => return Ok(EvalResult::Return(v)),
+                        EvalResult::Break => return Ok(EvalResult::Break),
+                        EvalResult::Continue => return Ok(EvalResult::Continue),
                     };
                     let value_val = match self.eval(value_expr)? {
                         EvalResult::Value(v) => v,
                         EvalResult::Return(v) => return Ok(EvalResult::Return(v)),
+                        EvalResult::Break => return Ok(EvalResult::Break),
+                        EvalResult::Continue => return Ok(EvalResult::Continue),
                     };
                     if let Some(val) = self.current_env_mut().get_mut(var_name) {
                         if let Value::Array(arr) = val {
@@ -403,14 +452,20 @@ impl<'a> Evaluator<'a> {
                 let mut array_val = match self.eval(array_expr)? {
                     EvalResult::Value(v) => v,
                     EvalResult::Return(v) => return Ok(EvalResult::Return(v)),
+                    EvalResult::Break => return Ok(EvalResult::Break),
+                    EvalResult::Continue => return Ok(EvalResult::Continue),
                 };
                 let index_val = match self.eval(index_expr)? {
                     EvalResult::Value(v) => v,
                     EvalResult::Return(v) => return Ok(EvalResult::Return(v)),
+                    EvalResult::Break => return Ok(EvalResult::Break),
+                    EvalResult::Continue => return Ok(EvalResult::Continue),
                 };
                 let value_val = match self.eval(value_expr)? {
                     EvalResult::Value(v) => v,
                     EvalResult::Return(v) => return Ok(EvalResult::Return(v)),
+                    EvalResult::Break => return Ok(EvalResult::Break),
+                    EvalResult::Continue => return Ok(EvalResult::Continue),
                 };
                 if let Value::Array(ref mut arr) = array_val {
                     if let Value::Number(idx) = index_val {
@@ -438,12 +493,36 @@ impl<'a> Evaluator<'a> {
                 self.current_env_mut().insert(name.clone(), func);
                 Ok(EvalResult::Value(Value::Number(0)))
             }
+
+            ASTNode::WhileStatement(condition, body) => {
+                let mut last = Value::Number(0);
+                loop {
+                    let cond_val = match self.eval(condition)? {
+                        EvalResult::Value(v) => v,
+                        EvalResult::Return(v) => return Ok(EvalResult::Return(v)),
+                        EvalResult::Break => break,
+                        EvalResult::Continue => continue,
+                    };
+                    if let Value::Bool(false) = cond_val {
+                        break;
+                    }
+                    match self.eval(body)? {
+                        EvalResult::Value(val) => last = val,
+                        EvalResult::Return(val) => return Ok(EvalResult::Return(val)),
+                        EvalResult::Break => break,
+                        EvalResult::Continue => continue,
+                    }
+                }
+                Ok(EvalResult::Value(last))
+            }
             
             ASTNode::ReturnStatement(value) => {
                 let val = if let Some(val) = value {
                     match self.eval(val)? {
                         EvalResult::Value(v) => v,
                         EvalResult::Return(v) => v,
+                        EvalResult::Break => return Ok(EvalResult::Break),
+                        EvalResult::Continue => return Ok(EvalResult::Continue),
                     }
                 } else {
                     Value::Number(0)

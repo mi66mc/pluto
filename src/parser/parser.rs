@@ -31,17 +31,33 @@ impl<'a> Parser<'a> {
     fn parse_statement(&mut self) -> Result<ASTNode, String> {
         if self.match_kind(TokenKind::Let) {
             self.parse_variable_declaration()
+        } else if self.match_kind(TokenKind::While) {
+            self.parse_while_statement()
         } else if self.match_kind(TokenKind::Return) {
             self.parse_return_statement()
         } else if self.match_kind(TokenKind::Fn) {
             self.parse_function_declaration()
         } else if self.match_kind(TokenKind::If) {
             self.parse_if_statement()
+        } else if self.match_kind(TokenKind::Break) {
+            self.consume(TokenKind::Semicolon, "Expected ';' after 'break'")?;
+            Ok(ASTNode::Break)
+        } else if self.match_kind(TokenKind::Continue) {
+            self.consume(TokenKind::Semicolon, "Expected ';' after 'continue'")?;
+            Ok(ASTNode::Continue)
         } else {
             let expr = self.parse_expression(0)?;
             self.consume(TokenKind::Semicolon, "Expected ';' after expression")?;
             Ok(expr)
         }
+    }
+
+    fn parse_while_statement(&mut self) -> Result<ASTNode, String> {
+        self.consume(TokenKind::LParen, "Expected '(' after 'while'")?;
+        let condition = self.parse_expression(0)?;
+        self.consume(TokenKind::RParen, "Expected ')' after while condition")?;
+        let body = self.parse_block_or_single_statement()?;
+        Ok(ASTNode::WhileStatement(Box::new(condition), Box::new(body)))
     }
 
     fn parse_return_statement(&mut self) -> Result<ASTNode, String> {

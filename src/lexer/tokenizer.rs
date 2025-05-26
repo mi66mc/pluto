@@ -129,6 +129,8 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                 let identifier = &input[start..position];
                 if identifier == "let" {
                     tokens.push(Token::new(TokenKind::Let, start));
+                } else if identifier == "while" {
+                    tokens.push(Token::new(TokenKind::While, start));
                 } else if identifier == "fn" {
                     tokens.push(Token::new(TokenKind::Fn, start));
                 } else if identifier == "return" {
@@ -139,6 +141,10 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                     tokens.push(Token::new(TokenKind::Boolean(true), start));
                 } else if identifier == "false" {
                     tokens.push(Token::new(TokenKind::Boolean(false), start));
+                } else if identifier == "break" {
+                    tokens.push(Token::new(TokenKind::Break, start));
+                } else if identifier == "continue" {
+                    tokens.push(Token::new(TokenKind::Continue, start));
                 } else {
                     tokens.push(Token::new(TokenKind::Identifier(identifier.to_string()), start));
                 }

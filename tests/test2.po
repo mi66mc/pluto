@@ -1,24 +1,28 @@
-let arr = [0, 3, 2, 9];
-print(arr[3], type(arr));
-arr[3] = "23";
-print(arr[3], type(arr[3]));
-let x = arr[1];
-print(x);
+let list = [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+];
 
-let y;
-print(y);
-
-if false {
-    y = 5;
-    print(y);
-} else {
-    let por = 10000;
-    let a = 2;
-    print(por);
+fn squared(x) {
+    return x * x;
 }
 
-fn sum(x, y) {
-    return x + y;
+while (list.len() > 0) {
+    let item = list[0];
+    list = list.remove(0);
+    if (item % 2 == 0) {
+        print(format("{}: even", item));
+        print(format("{} squared is {}", item, squared(item)));
+    } else {
+        print(format("{}: odd", item));
+        print(format("{} squared is {}", item, squared(item)));
+    }
 }
-
-print(sum(5, 7));
