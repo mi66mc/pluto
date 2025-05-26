@@ -16,6 +16,13 @@ fn squared(x) {
 }
 
 while (list.len() > 0) {
+    /*
+        This is a comment.
+        Another way to do:
+        
+        let item = list[list.len() - 1];
+        list = list.pop();
+    */
     let item = list[0];
     list = list.remove(0);
     if (item % 2 == 0) {

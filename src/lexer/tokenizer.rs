@@ -9,10 +9,25 @@ pub fn tokenize(input: &str) -> Vec<Token> {
     while position < bytes.len() {
         let current_char = bytes[position] as char;
 
+        // Skip whitespace
         if current_char.is_whitespace() {
             position += 1;
             continue;
         }
+        // "/* */" 
+        // "*/"
+        if current_char == '/' && position + 1 < bytes.len() && bytes[position + 1] as char == '*' {
+            position += 2;
+            while position + 1 < bytes.len() && !(bytes[position] as char == '*' && bytes[position + 1] as char == '/') {
+                position += 1;
+            }
+            // "*/"
+            if position + 1 < bytes.len() {
+                position += 2;
+            }
+            continue;
+        }
+        // --- End block ---
 
         if current_char.is_digit(10) {
             let start = position;

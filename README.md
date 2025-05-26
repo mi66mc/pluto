@@ -29,7 +29,9 @@
 | <b>Method Calls</b>           | Call methods on strings, numbers, arrays, etc.   |
 | <b>Member Access</b>          | Access module members (e.g. `Math.pi`)           |
 | <b>If Statements</b>          | Conditional execution with `if` and `else`       |
+| <b>While Loops</b>            | `while` loops with condition in parentheses      |
 | <b>Arrays</b>                 | Array literals, indexing, assignment, methods    |
+| <b>Comments</b>               | Block comments using `/* ... */`                 |
 | <b>Extensible</b>             | Add your own built-in functions in Rust          |
 | <b>Simple Syntax</b>          | Easy to read and write                           |
 
@@ -94,6 +96,35 @@ c
 [sum type...]
 Grather than 10! or Less than 10!
 7
+```
+
+---
+
+## Comments
+
+Pluto supports block comments using the `/* ... */` syntax. Everything between `/*` and `*/` will be ignored by the interpreter.
+
+```pluto
+let x = 5;
+/*
+  This is a block comment.
+  It can span multiple lines.
+*/
+let y = x + 1; /* Inline block comment */
+```
+
+---
+
+## While Loops
+
+Pluto supports `while` loops with the condition enclosed in parentheses, similar to C-like languages:
+
+```pluto
+let i = 0;
+while (i < 5) {
+    print(i);
+    i = i + 1;
+}
 ```
 
 ---
