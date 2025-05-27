@@ -23,6 +23,12 @@ pub enum ASTNode {
     AssignmentIndex(Box<ASTNode>, Box<ASTNode>, Box<ASTNode>), // array, index, value
     Break,
     Continue,
+    ForStatement(
+        Option<Box<ASTNode>>,
+        Option<Box<ASTNode>>,
+        Option<Box<ASTNode>>,
+        Box<ASTNode>,
+    ),
 }
 
 pub trait ASTNodeTrait {
@@ -103,6 +109,24 @@ impl ASTNodeTrait for ASTNode {
             ASTNode::AssignmentIndex(array, index, value) => format!("{}[{}] = {}", array.to_string(), index.to_string(), value.to_string()),
             ASTNode::Break => "break".to_string(),
             ASTNode::Continue => "continue".to_string(),
+            ASTNode::ForStatement(initializer, condition, increment, body) => {
+                let init_str = if let Some(init) = initializer {
+                    format!("{}; ", init.to_string())
+                } else {
+                    String::new()
+                };
+                let cond_str = if let Some(cond) = condition {
+                    format!("{}; ", cond.to_string())
+                } else {
+                    String::new()
+                };
+                let inc_str = if let Some(inc) = increment {
+                    format!("{}", inc.to_string())
+                } else {
+                    String::new()
+                };
+                format!("for {}{}{}{}", init_str, cond_str, inc_str, body.to_string())
+            }
         }
     }
 }

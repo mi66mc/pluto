@@ -30,6 +30,7 @@
 | <b>Member Access</b>          | Access module members (e.g. `Math.pi`)           |
 | <b>If Statements</b>          | Conditional execution with `if` and `else`       |
 | <b>While Loops</b>            | `while` loops with condition in parentheses      |
+| <b>For Loops</b>              | C-style `for` loops with init, condition, increment |
 | <b>Arrays</b>                 | Array literals, indexing, assignment, methods    |
 | <b>Comments</b>               | Block comments using `/* ... */`                 |
 | <b>Extensible</b>             | Add your own built-in functions in Rust          |
@@ -125,6 +126,41 @@ while (i < 5) {
     print(i);
     i = i + 1;
 }
+```
+
+---
+
+## For Loops
+
+Pluto now supports C-style `for` loops, with initialization, condition, and increment expressions, just like in C, C++, or JavaScript.
+
+### Syntax
+
+```pluto
+for (let i = 0; i < 5; i = i + 1) {
+    print(i);
+}
+```
+
+- The initialization, condition, and increment are separated by semicolons and enclosed in parentheses.
+- The loop body can be a block (`{ ... }`) or a single statement.
+
+### Example
+
+```pluto
+for (let i = 0; i < 10; i = i + 2) {
+    print(format("i = {}", i));
+}
+```
+
+This will print:
+
+```
+i = 0
+i = 2
+i = 4
+i = 6
+i = 8
 ```
 
 ---
@@ -228,6 +264,7 @@ Or, after building:
 | Array Literal         | `let arr = [1, 2, 3];`         | Array assignment                |
 | Array Indexing        | `arr[0]`                       | Access array element            |
 | Array Assignment      | `arr[0] = 42;`                 | Modify array element            |
+| For Loop              | `for (let i = 0; i < 5; i = i + 1) { print(i); }` | C-style for loop               |
 
 ---
 

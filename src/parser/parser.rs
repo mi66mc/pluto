@@ -45,6 +45,8 @@ impl<'a> Parser<'a> {
         } else if self.match_kind(TokenKind::Continue) {
             self.consume(TokenKind::Semicolon, "Expected ';' after 'continue'")?;
             Ok(ASTNode::Continue)
+        } else if self.match_kind(TokenKind::For) {
+            self.parse_for_statement()
         } else {
             let expr = self.parse_expression(0)?;
             self.consume(TokenKind::Semicolon, "Expected ';' after expression")?;
@@ -313,5 +315,34 @@ impl<'a> Parser<'a> {
         let tok = &self.tokens[self.current];
         self.current += 1;
         tok
+    }
+
+    fn parse_for_statement(&mut self) -> Result<ASTNode, String> {
+        self.consume(TokenKind::LParen, "Expected '(' after 'for'")?;
+        
+        let initializer = if self.peek_kind() != Some(&TokenKind::Semicolon) {
+            Some(Box::new(self.parse_statement()?))
+        } else {
+            self.advance(); // ';'
+            None
+        };
+
+        let condition = if self.peek_kind() != Some(&TokenKind::Semicolon) {
+            Some(Box::new(self.parse_expression(0)?))
+        } else {
+            None
+        };
+        self.consume(TokenKind::Semicolon, "Expected ';' after for-loop condition")?;
+
+        let increment = if self.peek_kind() != Some(&TokenKind::RParen) {
+            Some(Box::new(self.parse_expression(0)?))
+        } else {
+            None
+        };
+        
+        self.consume(TokenKind::RParen, "Expected ')' after for-loop increment")?;
+
+        let body = self.parse_block_or_single_statement()?;
+        Ok(ASTNode::ForStatement(initializer, condition, increment, Box::new(body)))
     }
 }

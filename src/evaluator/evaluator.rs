@@ -530,6 +530,38 @@ impl<'a> Evaluator<'a> {
                 Ok(EvalResult::Return(val))
             }
 
+            ASTNode::ForStatement(init, cond, incr, body) => {
+                self.env_stack.push(HashMap::new());
+                if let Some(init) = init {
+                    self.eval(&*init)?;
+                }
+                loop {
+                    if let Some(cond) = cond {
+                        let cond_val = self.eval(&*cond)?;
+                        match cond_val {
+                            EvalResult::Value(Value::Bool(false)) => break,
+                            EvalResult::Value(Value::Bool(true)) => {},
+                            EvalResult::Return(val) => return Ok(EvalResult::Return(val)),
+                            EvalResult::Break => break,
+                            EvalResult::Continue => continue,
+                            _ => return Err("Condition in 'for' must be a boolean".to_string()),
+                        }
+                    }
+                    let res = self.eval(&*body)?;
+                    match res {
+                        EvalResult::Break => break,
+                        EvalResult::Continue => {},
+                        EvalResult::Return(val) => return Ok(EvalResult::Return(val)),
+                        _ => {}
+                    }
+                    if let Some(incr) = incr {
+                        self.eval(&*incr)?;
+                    }
+                }
+                self.env_stack.pop();
+                Ok(EvalResult::Value(Value::Bool(true)))
+            }
+
             _ => {println!("{:?}", node); Err("Unsupported AST node".into())},
         }
     }

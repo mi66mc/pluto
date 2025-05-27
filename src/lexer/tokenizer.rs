@@ -142,27 +142,44 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                     position += 1;
                 }
                 let identifier = &input[start..position];
-                if identifier == "let" {
-                    tokens.push(Token::new(TokenKind::Let, start));
-                } else if identifier == "while" {
-                    tokens.push(Token::new(TokenKind::While, start));
-                } else if identifier == "fn" {
-                    tokens.push(Token::new(TokenKind::Fn, start));
-                } else if identifier == "return" {
-                    tokens.push(Token::new(TokenKind::Return, start));
-                } else if identifier == "if" {
-                    tokens.push(Token::new(TokenKind::If, start));
-                } else if identifier == "true" {
-                    tokens.push(Token::new(TokenKind::Boolean(true), start));
-                } else if identifier == "false" {
-                    tokens.push(Token::new(TokenKind::Boolean(false), start));
-                } else if identifier == "break" {
-                    tokens.push(Token::new(TokenKind::Break, start));
-                } else if identifier == "continue" {
-                    tokens.push(Token::new(TokenKind::Continue, start));
-                } else {
-                    tokens.push(Token::new(TokenKind::Identifier(identifier.to_string()), start));
-                }
+                let kind = match identifier {
+                    "let" => TokenKind::Let,
+                    "for" => TokenKind::For,
+                    "while" => TokenKind::While,
+                    "fn" => TokenKind::Fn,
+                    "return" => TokenKind::Return,
+                    "if" => TokenKind::If,
+                    "true" => TokenKind::Boolean(true),
+                    "false" => TokenKind::Boolean(false),
+                    "break" => TokenKind::Break,
+                    "continue" => TokenKind::Continue,
+                    _ => TokenKind::Identifier(identifier.to_string()),
+                };
+                // };
+                // if identifier == "let" {
+                //     tokens.push(Token::new(TokenKind::Let, start));
+                // } else if identifier == "for" {
+                //     tokens.push(Token::new(TokenKind::For, start));
+                // } else if identifier == "while" {
+                //     tokens.push(Token::new(TokenKind::While, start));
+                // } else if identifier == "fn" {
+                //     tokens.push(Token::new(TokenKind::Fn, start));
+                // } else if identifier == "return" {
+                //     tokens.push(Token::new(TokenKind::Return, start));
+                // } else if identifier == "if" {
+                //     tokens.push(Token::new(TokenKind::If, start));
+                // } else if identifier == "true" {
+                //     tokens.push(Token::new(TokenKind::Boolean(true), start));
+                // } else if identifier == "false" {
+                //     tokens.push(Token::new(TokenKind::Boolean(false), start));
+                // } else if identifier == "break" {
+                //     tokens.push(Token::new(TokenKind::Break, start));
+                // } else if identifier == "continue" {
+                //     tokens.push(Token::new(TokenKind::Continue, start));
+                // } else {
+                //     tokens.push(Token::new(TokenKind::Identifier(identifier.to_string()), start));
+                // }
+                tokens.push(Token::new(kind, start));
                 continue;
             }
             _ => tokens.push(Token::new(TokenKind::Unknown(current_char), position)),

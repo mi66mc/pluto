@@ -11,15 +11,19 @@ let list = [
     10
 ];
 
+let list2 = list;
+
 fn squared(x) {
     return x * x;
 }
+
+/* WHILE LOOP */
 
 while (list.len() > 0) {
     /*
         This is a comment.
         Another way to do:
-        
+
         let item = list[list.len() - 1];
         list = list.pop();
     */
@@ -27,9 +31,23 @@ while (list.len() > 0) {
     list = list.remove(0);
     if (item % 2 == 0) {
         print(format("{}: even", item));
-        print(format("{} squared is {}", item, squared(item)));
+        print(format("  {} squared is {}", item, squared(item)));
     } else {
         print(format("{}: odd", item));
-        print(format("{} squared is {}", item, squared(item)));
+        print(format("  {} squared is {}", item, squared(item)));
+    }
+}
+
+print("", "------------ FOR LOOP ------------", "");
+
+/* FOR LOOP */
+for (let i = 0; i < list2.len(); i = i + 1) {
+    let item = list2[i];
+    if (item % 2 == 0) {
+        print(format("{}: even", item));
+        print(format("  {} squared is {}", item, squared(item)));
+    } else {
+        print(format("{}: odd", item));
+        print(format("  {} squared is {}", item, squared(item)));
     }
 }
