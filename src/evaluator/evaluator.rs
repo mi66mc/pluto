@@ -562,6 +562,151 @@ impl<'a> Evaluator<'a> {
                 Ok(EvalResult::Value(Value::Bool(true)))
             }
 
+            ASTNode::PostfixUnaryExpression(op, expr) => {
+                if let ASTNode::Identifier(ref name) = **expr {
+                    let mut val = self.lookup(name).ok_or(format!("Undefined variable '{}'", name))?;
+                    match (&op[..], &mut val) {
+                        ("++", Value::Number(n)) => {
+                            let old = *n;
+                            *n += 1;
+                            for env in self.env_stack.iter_mut().rev() {
+                                if let Some(Value::Number(v)) = env.get_mut(name) {
+                                    *v = *n;
+                                    break;
+                            }
+                            }
+                            Ok(EvalResult::Value(Value::Number(old)))
+                        }
+                        ("++", Value::Float(n)) => {
+                            let old = *n;
+                            *n += 1.0;
+                            for env in self.env_stack.iter_mut().rev() {
+                                if let Some(Value::Float(v)) = env.get_mut(name) {
+                                    *v = *n;
+                                    break;
+                                }
+                            }
+                            Ok(EvalResult::Value(Value::Float(old)))
+                        }
+                        ("--", Value::Number(n)) => {
+                            let old = *n;
+                            *n -= 1;
+                            for env in self.env_stack.iter_mut().rev() {
+                                if let Some(Value::Number(v)) = env.get_mut(name) {
+                                    *v = *n;
+                                    break;
+                            }
+                            }
+                            Ok(EvalResult::Value(Value::Number(old)))
+                        }
+                        ("--", Value::Float(n)) => {
+                            let old = *n;
+                            *n -= 1.0;
+                            for env in self.env_stack.iter_mut().rev() {
+                                if let Some(Value::Float(v)) = env.get_mut(name) {
+                                    *v = *n;
+                                    break;
+                                }
+                            }
+                            Ok(EvalResult::Value(Value::Float(old)))
+                        }
+                        _ => Err("Unsupported postfix operation".to_string()),
+                    }
+                } else {
+                    Err("Postfix unary operation only supported on variables".to_string())
+                }
+            }
+
+            ASTNode::AssignmentOp(op, left, right) => {
+                if let ASTNode::Identifier(ref name) = **left {
+                    let right_val = match self.eval(right)? {
+                        EvalResult::Value(v) => v,
+                        _ => return Err("Invalid right value".to_string()),
+                    };
+                    let mut val = self.lookup(name).ok_or(format!("Undefined variable '{}'", name))?;
+                    let new_val = match (op.as_str(), &mut val, right_val) {
+                        ("+=", Value::Number(n), Value::Number(r)) => {
+                            *n += r;
+                            Value::Number(*n)
+                        }
+                        ("-=", Value::Number(n), Value::Number(r)) => {
+                            *n -= r;
+                            Value::Number(*n)
+                        }
+                        ("*=", Value::Number(n), Value::Number(r)) => {
+                            *n *= r;
+                            Value::Number(*n)
+                        }
+                        ("/=", Value::Number(n), Value::Number(r)) => {
+                            *n /= r;
+                            Value::Number(*n)
+                        }
+                        ("+=", Value::Number(n), Value::Float(r)) => {
+                            *n = (*n as f64 + r) as i64;
+                            Value::Number(*n)
+                        }
+                        ("-=", Value::Number(n), Value::Float(r)) => {
+                            *n = (*n as f64 - r) as i64;
+                            Value::Number(*n)
+                        }
+                        ("*=", Value::Number(n), Value::Float(r)) => {
+                            *n = (*n as f64 * r) as i64;
+                            Value::Number(*n)
+                        }
+                        ("/=", Value::Number(n), Value::Float(r)) => {
+                            *n = (*n as f64 / r) as i64;
+                            Value::Number(*n)
+                        }
+                        ("+=", Value::Float(n), Value::Float(r)) => {
+                            *n += r;
+                            Value::Float(*n)
+                        }
+                        ("-=", Value::Float(n), Value::Float(r)) => {
+                            *n -= r;
+                            Value::Float(*n)
+                        }
+                        ("*=", Value::Float(n), Value::Float(r)) => {
+                            *n *= r;
+                            Value::Float(*n)
+                        }
+                        ("/=", Value::Float(n), Value::Float(r)) => {
+                            *n /= r;
+                            Value::Float(*n)
+                        }
+                        ("+=", Value::Float(n), Value::Number(r)) => {
+                            *n += r as f64;
+                            Value::Float(*n)
+                        }
+                        ("-=", Value::Float(n), Value::Number(r)) => {
+                            *n -= r as f64;
+                            Value::Float(*n)
+                        }
+                        ("*=", Value::Float(n), Value::Number(r)) => {
+                            *n *= r as f64;
+                            Value::Float(*n)
+                        }
+                        ("/=", Value::Float(n), Value::Number(r)) => {
+                            *n /= r as f64;
+                            Value::Float(*n)
+                        }
+                        ("+=", Value::String(s), Value::String(r)) => {
+                            s.push_str(&r);
+                            Value::String(s.clone())
+                        }
+                        _ => return Err("Unsupported assignment operator or type".to_string()),
+                    };
+                    for env in self.env_stack.iter_mut().rev() {
+                        if let Some(v) = env.get_mut(name) {
+                            *v = new_val.clone();
+                            break;
+                        }
+                    }
+                    Ok(EvalResult::Value(new_val))
+                } else {
+                    Err("Assignment operator only supported on variables".to_string())
+                }
+            }
+
             _ => {println!("{:?}", node); Err("Unsupported AST node".into())},
         }
     }

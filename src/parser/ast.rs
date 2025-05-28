@@ -6,6 +6,8 @@ pub enum ASTNode {
     Assignment(String, Box<ASTNode>),
     BinaryExpression(Box<ASTNode>, String, Box<ASTNode>),
     UnaryExpression(String, Box<ASTNode>),
+    PostfixUnaryExpression(String, Box<ASTNode>),
+    AssignmentOp(String, Box<ASTNode>, Box<ASTNode>),
     NumberLiteral(i64),
     FloatLiteral(f64),
     StringLiteral(String),
@@ -38,6 +40,12 @@ pub trait ASTNodeTrait {
 impl ASTNodeTrait for ASTNode {
     fn to_string(&self) -> String {
         match self {
+            ASTNode::PostfixUnaryExpression(operator, expression) => {
+                format!("{}{}", expression.to_string(), operator)
+            }
+            ASTNode::AssignmentOp(operator, left, right) => {
+                format!("{} {} {}", left.to_string(), operator, right.to_string())
+            }
             ASTNode::Block(statements) => {
                 let mut result = String::new();
                 for statement in statements {

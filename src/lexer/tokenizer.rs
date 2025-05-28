@@ -53,8 +53,8 @@ pub fn tokenize(input: &str) -> Vec<Token> {
         }
 
         match current_char {
-            '[' => tokens.push(Token::new(TokenKind::LBacket, position)),
-            ']' => tokens.push(Token::new(TokenKind::RBacket, position)),
+            '[' => tokens.push(Token::new(TokenKind::LBracket, position)),
+            ']' => tokens.push(Token::new(TokenKind::RBracket, position)),
             '\"' => {
                 let start = position + 1;
                 position += 1;
@@ -70,11 +70,58 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                 }
                 continue;
             }
-            '+' => tokens.push(Token::new(TokenKind::Plus, position)),
-            '-' => tokens.push(Token::new(TokenKind::Minus, position)),
-            '*' => tokens.push(Token::new(TokenKind::Star, position)),
-            '/' => tokens.push(Token::new(TokenKind::Slash, position)),
-            '%' => tokens.push(Token::new(TokenKind::Percent, position)),
+            // '+' => tokens.push(Token::new(TokenKind::Plus, position)),
+            // '-' => tokens.push(Token::new(TokenKind::Minus, position)),
+            // '*' => tokens.push(Token::new(TokenKind::Star, position)),
+            // '/' => tokens.push(Token::new(TokenKind::Slash, position)),
+            // '%' => tokens.push(Token::new(TokenKind::Percent, position)),
+            '+' => {
+                if position + 1 < bytes.len() && bytes[position + 1] as char == '+' {
+                    tokens.push(Token::new(TokenKind::PlusPlus, position));
+                    position += 2;
+                    continue;
+                } else if position + 1 < bytes.len() && bytes[position + 1] as char == '=' {
+                    tokens.push(Token::new(TokenKind::PlusEqual, position));
+                    position += 2;
+                    continue;
+                } else {
+                    tokens.push(Token::new(TokenKind::Plus, position));
+                }
+            }
+            '-' => {
+                if position + 1 < bytes.len() && bytes[position + 1] as char == '-' {
+                    tokens.push(Token::new(TokenKind::MinusMinus, position));
+                    position += 2;
+                    continue;
+                } else if position + 1 < bytes.len() && bytes[position + 1] as char == '=' {
+                    tokens.push(Token::new(TokenKind::MinusEqual, position));
+                    position += 2;
+                    continue;
+                } else {
+                    tokens.push(Token::new(TokenKind::Minus, position));
+                }
+            }
+            '*' => {
+                if position + 1 < bytes.len() && bytes[position + 1] as char == '=' {
+                    tokens.push(Token::new(TokenKind::StarEqual, position));
+                    position += 2;
+                    continue;
+                } else {
+                    tokens.push(Token::new(TokenKind::Star, position));
+                }
+            }
+            '/' => {
+                if position + 1 < bytes.len() && bytes[position + 1] as char == '=' {
+                    tokens.push(Token::new(TokenKind::SlashEqual, position));
+                    position += 2;
+                    continue;
+                } else {
+                    tokens.push(Token::new(TokenKind::Slash, position));
+                }
+            }
+            '%' => {
+                tokens.push(Token::new(TokenKind::Percent, position));
+            }
             '=' => {
                 if position + 1 < bytes.len() && bytes[position + 1] as char == '=' {
                     tokens.push(Token::new(TokenKind::EqualsEqual, position));

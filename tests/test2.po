@@ -41,7 +41,7 @@ while (list.len() > 0) {
 print("", "------------ FOR LOOP ------------", "");
 
 /* FOR LOOP */
-for (let i = 0; i < list2.len(); i = i + 1) {
+for (let i = 0; i < list2.len(); i++) {
     let item = list2[i];
     if (item % 2 == 0) {
         print(format("{}: even", item));

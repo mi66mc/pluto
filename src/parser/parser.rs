@@ -165,6 +165,21 @@ impl<'a> Parser<'a> {
             }
         }
 
+        if let Some(kind) = self.peek_kind() {
+            let op = match kind {
+                TokenKind::PlusEqual => Some("+="),
+                TokenKind::MinusEqual => Some("-="),
+                TokenKind::StarEqual => Some("*="),
+                TokenKind::SlashEqual => Some("/="),
+                _ => None,
+            };
+            if let Some(op_str) = op {
+                self.advance();
+                let right = self.parse_expression(0)?;
+                return Ok(ASTNode::AssignmentOp(op_str.to_string(), Box::new(left), Box::new(right)));
+            }
+        }
+
         while let Some(op_prec) = self.current_precedence() {
             if op_prec < min_prec {
                 break;
@@ -199,19 +214,19 @@ impl<'a> Parser<'a> {
             TokenKind::Float(f)             => ASTNode::FloatLiteral(f),
             TokenKind::Boolean(b)          => ASTNode::BooleanLiteral(b),
             TokenKind::StringLiteral(s)  => ASTNode::StringLiteral(s),
-            TokenKind::LBacket => {
+            TokenKind::LBracket => {
                 let mut elements = Vec::new();
-                if self.peek_kind() != Some(&TokenKind::RBacket) {
+                if self.peek_kind() != Some(&TokenKind::RBracket) {
                     loop {
                         let expr = self.parse_expression(0)?;
                         elements.push(Box::new(expr));
-                        if self.peek_kind() == Some(&TokenKind::RBacket) {
+                        if self.peek_kind() == Some(&TokenKind::RBracket) {
                             break;
                         }
                         self.consume(TokenKind::Comma, "Expected ',' or ']' in array literal")?;
                     }
                 }
-                self.consume(TokenKind::RBacket, "Expected ']' after array literal")?;
+                self.consume(TokenKind::RBracket, "Expected ']' after array literal")?;
                 ASTNode::ArrayLiteral(elements)
             }
             TokenKind::Identifier(s)     => {
@@ -273,11 +288,19 @@ impl<'a> Parser<'a> {
                 } else {
                     node = ASTNode::MemberAccess(Box::new(node), member_name);
                 }
-            } else if self.peek_kind() == Some(&TokenKind::LBacket) {
+            } else if self.peek_kind() == Some(&TokenKind::LBracket) {
                 self.advance(); // '['
                 let index_expr = self.parse_expression(0)?;
-                self.consume(TokenKind::RBacket, "Expected ']' after index")?;
+                self.consume(TokenKind::RBracket, "Expected ']' after index")?;
                 node = ASTNode::IndexAccess(Box::new(node), Box::new(index_expr));
+            } else if self.peek_kind() == Some(&TokenKind::PlusPlus) {
+                self.advance();
+                node = ASTNode::PostfixUnaryExpression("++".to_string(), Box::new(node));
+                continue;
+            } else if self.peek_kind() == Some(&TokenKind::MinusMinus) {
+                self.advance();
+                node = ASTNode::PostfixUnaryExpression("--".to_string(), Box::new(node));
+                continue;
             } else {
                 break;
             }

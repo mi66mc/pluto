@@ -21,7 +21,7 @@
 |------------------------|--------------------------------------------------|
 | <b>Variables</b>              | `let` keyword for variable declaration           |
 | <b>Block Scoping</b>          | Variables are scoped to their block              |
-| <b>Arithmetic Expressions</b> | Supports `+`, `-`, `*`, `/`, `%`                 |
+| <b>Arithmetic Expressions</b> | Supports `+`, `-`, `*`, `/`, `%`, `++`, `--`, `+=`, `-=`, `*=`, `/=` |
 | <b>Floating Point Support</b> | Both integers and floats supported               |
 | <b>String Support</b>         | String literals and concatenation                |
 | <b>Boolean Support</b>        | `true` and `false` literals, type detection      |
@@ -78,6 +78,15 @@ fn sum(a, b) {
     return a + b;
 }
 print(sum(3, 4));
+
+x++;
+print(x);
+x += 2;
+print(x);
+x--;
+print(x);
+x *= 2;
+print(x);
 ```
 
 **Sample Output:**
@@ -97,6 +106,10 @@ c
 [sum type...]
 Grather than 10! or Less than 10!
 7
+6.5
+8.5
+7.5
+15
 ```
 
 ---
@@ -250,6 +263,8 @@ Or, after building:
 | Variable Declaration  | `let x = 10;`                  | Declare variable `x`            |
 | Block Scope           | `{ let y = 5; print(y); }`     | Variables are scoped to blocks  |
 | Arithmetic            | `let y = x * 2 + 3;`           | Expressions with `+ - * / %`    |
+| Increment/Decrement   | `x++; x--;`                    | Postfix increment/decrement     |
+| Assignment Operators  | `x += 1; x -= 2; x *= 3; x /= 4;` | Compound assignment operators |
 | String Literal        | `let s = "hello";`             | String assignment               |
 | String Concatenation  | `let t = s + " world";`        | Concatenate strings             |
 | Boolean Literal       | `let b = true;`                | Boolean assignment              |
