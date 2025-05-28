@@ -199,10 +199,7 @@ pub fn default_env() -> HashMap<String, Value> {
             Some(Value::Number(n)) => *n as f64,
             _ => return Value::Float(0.0),
         };
-        if let Some(Value::Float(f)) = args.get(2) {
-            return Value::Float(a.powf(b) + f);
-        }
-        Value::Float(0.0)
+        return Value::Float(a.powf(b))
     }));
 
     env.insert("Math".to_string(), Value::Module(math));
@@ -215,12 +212,7 @@ pub fn default_env() -> HashMap<String, Value> {
         "print".to_string(),
         Value::BuiltInFunction(|args| {
             for arg in args {
-                match arg {
-                    Value::Number(n)    => println!("{}", n),
-                    Value::Float(f)     => println!("{}", f),
-                    Value::String(s) => println!("{}", s),
-                    _ => println!("{:?}", arg),
-                }
+                println!("{}", arg.to_string());
             }
             Value::Number(0)
         }),
