@@ -1,6 +1,7 @@
 [package]
 name = "pluto-lang"
-version = "0.3.3"
+version = "0.3.4"
+
 edition = "2024"
 description = "A interpreted programming language made in Rust"
 keywords = ["rust", "interpreter", "language"]

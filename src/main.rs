@@ -4,9 +4,11 @@ mod parser;
 mod evaluator;
 mod utils;
 mod builtins;
+mod repl;
 
 use utils::args::get_args;
 use std::fs;
+use repl::repl::repl;
 
 fn main() {
     // Example usage of the lexer
@@ -29,7 +31,7 @@ fn main() {
     let args = get_args();
 
     if args.len() < 2 {
-        eprintln!("Usage: {} <filename>", args[0]);
+        repl();
         return;
     }
     let filename = &args[1];

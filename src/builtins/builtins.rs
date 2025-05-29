@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use crate::{evaluator::evaluator::Value};
 use std::io::Write;
+use std::time::{SystemTime, UNIX_EPOCH};
+use std::thread;
 
 pub type MethodFn = fn(&Value, Vec<Value>) -> Result<Value, String>;
 
@@ -203,6 +205,29 @@ pub fn default_env() -> HashMap<String, Value> {
     }));
 
     env.insert("Math".to_string(), Value::Module(math));
+
+    // -----------------------------------------------------
+
+    let mut time = HashMap::new();
+
+    time.insert("now".to_string(), Value::BuiltInFunction(|_args| {
+        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+        Value::Number(now.as_secs() as i64)
+    }));
+
+    time.insert("now_ms".to_string(), Value::BuiltInFunction(|_args| {
+        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+        Value::Number(now.as_millis() as i64)
+    }));
+
+    time.insert("sleep".to_string(), Value::BuiltInFunction(|args| {
+        if let Some(Value::Number(ms)) = args.get(0) {
+            thread::sleep(std::time::Duration::from_millis(*ms as u64));
+        }
+        Value::Number(0)
+    }));
+
+    env.insert("Time".to_string(), Value::Module(time));
 
     // -----------------------------------------------------
     // -------------------- GENERAL ------------------------

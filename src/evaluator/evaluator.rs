@@ -137,6 +137,15 @@ impl<'a> Evaluator<'a> {
         }
     }
 
+    pub fn evaluate_ast(&mut self, ast: crate::parser::ast::ASTNode) -> Result<Value, String> {
+        match self.eval(&ast)? {
+            EvalResult::Value(val) => Ok(val),
+            EvalResult::Return(val) => Ok(val),
+            EvalResult::Break => Err("Unexpected 'break' outside of loop".to_string()),
+            EvalResult::Continue => Err("Unexpected 'continue' outside of loop".to_string()),
+        }
+    }
+
     // -----------------------------------------------------
     // ------------------   CORE EVAL    -------------------
     // -----------------------------------------------------
