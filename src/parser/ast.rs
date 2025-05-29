@@ -14,6 +14,7 @@ pub enum ASTNode {
     ArrayLiteral(Vec<Box<ASTNode>>),
     Identifier(String),
     FunctionDeclaration(String, Vec<String>, Box<ASTNode>),
+    AnonymousFunction(Vec<String>, Box<ASTNode>),
     FunctionCall(String, Vec<Box<ASTNode>>),
     IfStatement(Box<ASTNode>, Box<ASTNode>, Option<Box<ASTNode>>),
     WhileStatement(Box<ASTNode>, Box<ASTNode>),
@@ -40,6 +41,10 @@ pub trait ASTNodeTrait {
 impl ASTNodeTrait for ASTNode {
     fn to_string(&self) -> String {
         match self {
+            ASTNode::AnonymousFunction(params, body) => {
+                let params_str = params.join(", ");
+                format!("({}) {}", params_str, body.to_string())
+            }
             ASTNode::PostfixUnaryExpression(operator, expression) => {
                 format!("{}{}", expression.to_string(), operator)
             }

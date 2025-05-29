@@ -97,6 +97,10 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                     tokens.push(Token::new(TokenKind::MinusEqual, position));
                     position += 2;
                     continue;
+                } else if position + 1 < bytes.len() && bytes[position + 1] as char == '>' {
+                    tokens.push(Token::new(TokenKind::ArrowFunc, position));
+                    position += 2;
+                    continue;
                 } else {
                     tokens.push(Token::new(TokenKind::Minus, position));
                 }

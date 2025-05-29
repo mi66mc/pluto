@@ -30,6 +30,7 @@ pub enum TokenKind {
     MinusEqual,
     StarEqual,
     SlashEqual,
+    ArrowFunc,
     And,
     Or,
     Not,
@@ -54,6 +55,7 @@ pub trait TokenKindTrait {
 impl TokenKindTrait for TokenKind {
     fn to_string(&self) -> String {
         match self {
+            TokenKind::ArrowFunc => "->".to_string(),
             TokenKind::PlusPlus => "++".to_string(),
             TokenKind::MinusMinus => "--".to_string(),
             TokenKind::PlusEqual => "+=".to_string(),

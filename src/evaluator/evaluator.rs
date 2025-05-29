@@ -249,6 +249,14 @@ impl<'a> Evaluator<'a> {
                     Err(format!("Undefined variable '{}'", name))
                 }
             }
+            
+            ASTNode::AnonymousFunction(params, body) => {
+                Ok(EvalResult::Value(Value::UserFunction {
+                    params: params.clone(),
+                    body: body.clone(),
+                    env: self.env_stack.clone(),
+                }))
+            }
 
             ASTNode::FunctionCall(name, args) => {
                 if let Some(val) = self.lookup(name) {

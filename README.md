@@ -15,6 +15,42 @@
 
 ---
 
+## Installation
+To install Pluto, you need to have Rust installed on your system. You can install Rust using [rustup](https://rustup.rs/).
+Once Rust is installed, you can clone the repository and build Pluto:
+
+```sh
+git clone https://github.com/mi66mc/pluto
+cd pluto
+cargo install --path .
+```
+
+or use [cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html) to install Pluto directly:
+
+```sh
+cargo install pluto-lang
+```
+
+it is executed by the command `pluto-lang` in your terminal.
+
+### Run
+
+To run Pluto, you can use the following command:
+
+```sh
+pluto-lang
+```
+
+or
+
+```sh
+pluto-lang <filename>
+```
+
+Where `<filename>` is the path to a Pluto source file you want to execute.
+
+---
+
 ## Features
 
 | Feature                | Description                                      |
@@ -26,6 +62,7 @@
 | <b>String Support</b>         | String literals and concatenation                |
 | <b>Boolean Support</b>        | `true` and `false` literals, type detection      |
 | <b>Function Calls</b>         | Built-in and user-defined functions              |
+| <b>Anonymous Functions</b>    | Lambda/arrow functions with `->` syntax          |
 | <b>Method Calls</b>           | Call methods on strings, numbers, arrays, etc.   |
 | <b>Member Access</b>          | Access module members (e.g. `Math.pi`)           |
 | <b>If Statements</b>          | Conditional execution with `if` and `else`       |
@@ -35,6 +72,47 @@
 | <b>Comments</b>               | Block comments using `/* ... */`                 |
 | <b>Extensible</b>             | Add your own built-in functions in Rust          |
 | <b>Simple Syntax</b>          | Easy to read and write                           |
+| <b>REPL Mode</b>              | Interactive Read-Eval-Print Loop                 |
+
+---
+
+## REPL Mode
+
+Pluto supports an interactive REPL (Read-Eval-Print Loop) mode. Simply run Pluto without any arguments:
+
+```sh
+cargo run
+```
+
+or
+
+```sh
+pluto-lang
+```
+
+You will see a prompt (`>`) where you can type Pluto code and see results immediately.
+
+## Anonymous Functions
+
+Pluto supports anonymous (lambda/arrow) functions using the `->` syntax. You can assign them to variables and pass them as arguments.
+
+### Syntax
+
+```pluto
+let f = (x) -> x * 2;
+print(f(10)); // 20
+
+let square = (x) -> { x * x; };
+print(square(5)); // 25
+```
+
+Anonymous functions can be used with array methods like `map`:
+
+```pluto
+let arr = [1, 2, 3];
+let result = arr.map((x) -> x + 1);
+print(result); // [2, 3, 4]
+```
 
 ---
 
@@ -236,24 +314,6 @@ print(type(s)); // Output: String
 
 - Rust (edition 2021 or later)
 
-### Build
-
-```sh
-cargo build --release
-```
-
-### Run
-
-```sh
-cargo run test.po
-```
-
-Or, after building:
-
-```sh
-./target/release/pluto test.po
-```
-
 ---
 
 ## Language Syntax
@@ -340,6 +400,7 @@ Or, after building:
 | pop()            | Returns new array with last removed| `arr.pop()`                    |
 | remove(i)        | Returns new array with element at index removed| `arr.remove(2)`               |
 | sum()            | Returns sum of numeric elements    | `arr.sum()`                    |
+| map(f)           | Returns new array with function applied to each element | `arr.map((x) -> x + 1)` |
 
 ### Module Methods
 

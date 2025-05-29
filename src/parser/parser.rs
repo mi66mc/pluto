@@ -249,7 +249,36 @@ impl<'a> Parser<'a> {
                     ASTNode::Identifier(s)
                 }
             }
-            TokenKind::LParen        => {
+            TokenKind::LParen => {
+                // arrow function
+                let mut params = Vec::new();
+                if self.peek_kind() != Some(&TokenKind::RParen) {
+                    loop {
+                        if let Some(TokenKind::Identifier(param)) = self.peek_kind().cloned() {
+                            params.push(param);
+                            self.advance();
+                        } else {
+                            return Err("Expected identifier in function parameters".into());
+                        }
+                        if self.peek_kind() == Some(&TokenKind::RParen) {
+                            break;
+                        }
+                        self.consume(TokenKind::Comma, "Expected ',' or ')' in function parameters")?;
+                    }
+                }
+                self.consume(TokenKind::RParen, "Expected ')' after function parameters")?;
+
+                // If next token is ArrowFunc, it's an anonymous function
+                if self.peek_kind() == Some(&TokenKind::ArrowFunc) {
+                    self.advance(); // '->'
+                    let body = if self.peek_kind() == Some(&TokenKind::LBrace) {
+                        self.parse_block_or_single_statement()?
+                    } else {
+                        self.parse_expression(0)?
+                    };
+                    return Ok(ASTNode::AnonymousFunction(params, Box::new(body)));
+                }
+
                 let expr = self.parse_expression(0)?;
                 self.consume(TokenKind::RParen, "Expected ')' after expression")?;
                 expr
