@@ -1,8 +1,10 @@
 use std::collections::HashMap;
+use crate::constants::token::Token;
 use crate::{evaluator::evaluator::Value};
 use std::io::Write;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::thread;
+use crate::evaluator::evaluator::{Evaluator, EvalResult};
 
 pub type MethodFn = fn(&Value, Vec<Value>) -> Result<Value, String>;
 
@@ -144,6 +146,47 @@ fn array_sum(v: &Value, _: Vec<Value>) -> Result<Value, String> {
     }
 }
 
+fn array_map(v: &Value, args: Vec<Value>) -> Result<Value, String> {
+    if let Value::Array(arr) = v {
+        if args.is_empty() {
+            return Err("No function provided for map".into());
+        }
+        let func = &args[0];
+        let mut new_arr = Vec::new();
+        for item in arr {
+            let result = match func {
+                Value::BuiltInFunction(f) => Ok(f(vec![item.clone()])),
+                Value::UserFunction { params, body, env } => {
+                    if params.len() != 1 {
+                        return Err("User function for map must take exactly one argument".into());
+                    }
+                    let mut func_env = env.clone();
+                    let mut frame = std::collections::HashMap::new();
+                    frame.insert(params[0].clone(), item.clone());
+                    func_env.push(frame);
+                    let d: Vec<Token> = Vec::new();
+            
+                    let mut evaluator = Evaluator {
+                        parser: crate::parser::parser::Parser::new(&d),
+                        env_stack: func_env,
+                    };
+                    match evaluator.eval(body) {
+                        Ok(EvalResult::Value(val)) => Ok(val),
+                        Ok(EvalResult::Return(val)) => Ok(val),
+                        Ok(_) => Err("Unexpected control flow in user function".into()),
+                        Err(e) => Err(e),
+                    }
+                }
+                _ => return Err("First argument must be a function".into()),
+            };
+            new_arr.push(result?);
+        }
+        Ok(Value::Array(new_arr))
+    } else {
+        Err("Not an array".into())
+    }
+}
+
 // ------------------------------------------------------
 
 pub fn string_methods() -> HashMap<&'static str, MethodFn> {
@@ -176,6 +219,7 @@ pub fn array_methods() -> HashMap<&'static str, MethodFn> {
     map.insert("pop", array_pop as MethodFn);
     map.insert("remove", array_remove as MethodFn);
     map.insert("sum", array_sum as MethodFn);
+    map.insert("map", array_map as MethodFn);
     map
 }
 

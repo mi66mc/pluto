@@ -8,7 +8,7 @@ use crate::parser::parser::Parser;
 
 #[allow(dead_code)]
 #[derive(Clone, Debug)]
-enum EvalResult {
+pub enum EvalResult {
     Value(Value),
     Return(Value),
     Break,
@@ -98,7 +98,7 @@ impl fmt::Display for Value {
 }
 
 pub struct Evaluator<'a> {
-    parser: Parser<'a>,
+    pub parser: Parser<'a>,
     pub env_stack: Vec<HashMap<String, Value>>,
 }
 
@@ -150,7 +150,7 @@ impl<'a> Evaluator<'a> {
     // ------------------   CORE EVAL    -------------------
     // -----------------------------------------------------
 
-    fn eval(&mut self, node: &ASTNode) -> Result<EvalResult, String> {
+    pub fn eval(&mut self, node: &ASTNode) -> Result<EvalResult, String> {
         match node {
             ASTNode::Program(statements) => {
                 let mut last = Value::Number(0);
