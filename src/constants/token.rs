@@ -46,6 +46,7 @@ pub enum TokenKind {
     If,
     EOF,
     Unknown(char),
+    Colon,
 }
 
 pub trait TokenKindTrait {
@@ -101,6 +102,7 @@ impl TokenKindTrait for TokenKind {
             TokenKind::StringLiteral(value) => format!("\"{}\"", value),
             TokenKind::EOF => "EOF".to_string(),
             TokenKind::Unknown(c) => c.to_string(),
+            TokenKind::Colon => ":".to_string(),
         }
     }
 }

@@ -12,6 +12,7 @@ pub enum ASTNode {
     FloatLiteral(f64),
     StringLiteral(String),
     ArrayLiteral(Vec<Box<ASTNode>>),
+    HashMapLiteral(Vec<(String, Box<ASTNode>)>),
     Identifier(String),
     FunctionDeclaration(String, Vec<String>, Box<ASTNode>),
     AnonymousFunction(Vec<String>, Box<ASTNode>),
@@ -41,6 +42,13 @@ pub trait ASTNodeTrait {
 impl ASTNodeTrait for ASTNode {
     fn to_string(&self) -> String {
         match self {
+            ASTNode::HashMapLiteral(pairs) => {
+                let pairs_str: Vec<String> = pairs
+                    .iter()
+                    .map(|(key, value)| format!("{}: {}", key, value.to_string()))
+                    .collect();
+                format!("{{{}}}", pairs_str.join(", "))
+            }
             ASTNode::AnonymousFunction(params, body) => {
                 let params_str = params.join(", ");
                 format!("({}) {}", params_str, body.to_string())

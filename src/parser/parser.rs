@@ -268,7 +268,6 @@ impl<'a> Parser<'a> {
                 }
                 self.consume(TokenKind::RParen, "Expected ')' after function parameters")?;
 
-                // If next token is ArrowFunc, it's an anonymous function
                 if self.peek_kind() == Some(&TokenKind::ArrowFunc) {
                     self.advance(); // '->'
                     let body = if self.peek_kind() == Some(&TokenKind::LBrace) {
@@ -286,6 +285,28 @@ impl<'a> Parser<'a> {
             TokenKind::Not => {
                 let expr = self.parse_primary()?;
                 ASTNode::UnaryExpression("!".to_string(), Box::new(expr))
+            }
+            TokenKind::LBrace => {
+                // hashmap
+                let mut pairs = Vec::new();
+                if self.peek_kind() != Some(&TokenKind::RBrace) {
+                    loop {
+                        let key = match self.advance().kind.clone() {
+                            TokenKind::StringLiteral(s) => s,
+                            TokenKind::Identifier(s) => s,
+                            other => return Err(format!("Expected string or identifier as key, got {:?}", other)),
+                        };
+                        self.consume(TokenKind::Colon, "Expected ':' after key in hash map literal")?;
+                        let value = self.parse_expression(0)?;
+                        pairs.push((key, Box::new(value)));
+                        if self.peek_kind() == Some(&TokenKind::RBrace) {
+                            break;
+                        }
+                        self.consume(TokenKind::Comma, "Expected ',' or '}' in hash map literal")?;
+                    }
+                }
+                self.consume(TokenKind::RBrace, "Expected '}' after hash map literal")?;
+                ASTNode::HashMapLiteral(pairs)
             }
             other => return Err(format!("Unexpected token: {:?}", other)),
         };

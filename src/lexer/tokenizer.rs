@@ -187,6 +187,7 @@ pub fn tokenize(input: &str) -> Vec<Token> {
             ';' => tokens.push(Token::new(TokenKind::Semicolon, position)),
             ',' => tokens.push(Token::new(TokenKind::Comma, position)),
             '.' => tokens.push(Token::new(TokenKind::Dot, position)),
+            ':' => tokens.push(Token::new(TokenKind::Colon, position)),
             'a'..='z' | 'A'..='Z' => {
                 let start = position;
                 while position < bytes.len() && ((bytes[position] as char).is_alphanumeric() || (bytes[position] as char) == '_') {

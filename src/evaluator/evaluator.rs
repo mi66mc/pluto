@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::fmt;
 
-use crate::builtins::builtins::{default_env, float_methods, number_methods, string_methods, array_methods};
+use crate::builtins::builtins::{default_env, float_methods, number_methods, string_methods, array_methods, hashmap_methods};
 use crate::constants::token::Token;
 use crate::parser::ast::{ASTNode, ASTNodeTrait};
 use crate::parser::parser::Parser;
@@ -29,6 +29,7 @@ pub enum Value {
     String(String),
     Module(HashMap<String, Value>),
     Array(Vec<Value>),
+    HashMapV(HashMap<String, Value>)
     // add more
 }
 
@@ -74,6 +75,13 @@ impl PlutoMethod for Value {
                     Err(format!("No such method '{}' for Array", method))
                 }
             }
+            Value::HashMapV(_) => {
+                if let Some(f) = hashmap_methods().get(method) {
+                    f(self, args)
+                } else {
+                    Err(format!("No such method '{}' for HashMap", method))
+                }
+            }
             _ => Err(format!("No such method '{}' for this type", method)),
         }
     }
@@ -93,6 +101,12 @@ impl fmt::Display for Value {
                 write!(f, "<function: params=[{}], body={:?}, env_size={} >", params_str, body, env.len())
             }
             Value::Array(arr) => write!(f, "[{}]", arr.iter().map(|v| v.to_string()).collect::<Vec<_>>().join(", ")),
+            Value::HashMapV(map) => {
+                let pairs: Vec<String> = map.iter()
+                    .map(|(k, v)| format!("{}: {}", k, v.to_string()))
+                    .collect();
+                write!(f, "{{{}}}", pairs.join(", "))
+            }
         }
     }
 }
@@ -428,6 +442,19 @@ impl<'a> Evaluator<'a> {
                             .map(EvalResult::Value)
                             .ok_or_else(|| "Array index out of bounds".to_string())
                     }
+                    (Value::Array(arr), Value::Float(idx)) => {
+                        let idx = idx as usize;
+                        arr.get(idx)
+                            .cloned()
+                            .map(EvalResult::Value)
+                            .ok_or_else(|| "Array index out of bounds".to_string())
+                    }
+                    (Value::HashMapV(hashm), Value::String(key)) => {
+                        hashm.get(&key)
+                            .cloned()
+                            .map(EvalResult::Value)
+                            .ok_or_else(|| format!("Key '{}' not found in hash map", key))
+                    }
                     _ => Err("Indexing only supported for arrays with integer indices".to_string()),
                 }
             }
@@ -495,6 +522,13 @@ impl<'a> Evaluator<'a> {
                         }
                     } else {
                         return Err("Assignment only supported for arrays with integer indices".to_string());
+                    }
+                } else if let Value::HashMapV(ref mut hashm) = array_val {
+                    if let Value::String(key) = index_val {
+                        hashm.insert(key, value_val.clone());
+                        return Ok(EvalResult::Value(Value::HashMapV(hashm.clone())));
+                    } else {
+                        return Err("Assignment only supported for hash maps with string keys".to_string());
                     }
                 } else {
                     return Err("Assignment only supported for arrays".to_string());
@@ -722,6 +756,18 @@ impl<'a> Evaluator<'a> {
                 } else {
                     Err("Assignment operator only supported on variables".to_string())
                 }
+            }
+
+            ASTNode::HashMapLiteral(pairs) => {
+                let mut map = std::collections::HashMap::new();
+                for (k, v_expr) in pairs {
+                    let v = match self.eval(v_expr)? {
+                        EvalResult::Value(val) => val,
+                        _ => return Err("Invalid value in hash map literal".to_string()),
+                    };
+                    map.insert(k.clone(), v);
+                }
+                Ok(EvalResult::Value(Value::HashMapV(map)))
             }
 
             _ => {println!("{:?}", node); Err("Unsupported AST node".into())},

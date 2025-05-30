@@ -189,6 +189,46 @@ fn array_map(v: &Value, args: Vec<Value>) -> Result<Value, String> {
 
 // ------------------------------------------------------
 
+fn hashmap_len(v: &Value, _: Vec<Value>) -> Result<Value, String> {
+    if let Value::HashMapV(map) = v {
+        Ok(Value::Number(map.len() as i64))
+    } else {
+        Err("Not a hashmap".into())
+    }
+}
+
+fn hashmap_get(v: &Value, args: Vec<Value>) -> Result<Value, String> {
+    if let Value::HashMapV(map) = v {
+        if let Some(Value::String(key)) = args.get(0) {
+            if let Some(value) = map.get(key) {
+                return Ok(value.clone());
+            }
+        }
+        Err("Key not found".into())
+    } else {
+        Err("Not a hashmap".into())
+    }
+}
+
+fn hashmap_set(v: &Value, args: Vec<Value>) -> Result<Value, String> {
+    if let Value::HashMapV(map) = v {
+        if args.len() < 2 {
+            return Err("Not enough arguments".into());
+        }
+        if let Some(Value::String(key)) = args.get(0) {
+            let value = args[1].clone();
+            let mut new_map = map.clone();
+            new_map.insert(key.clone(), value);
+            return Ok(Value::HashMapV(new_map));
+        }
+        Err("First argument must be a string key".into())
+    } else {
+        Err("Not a hashmap".into())
+    }
+}
+
+// ------------------------------------------------------
+
 pub fn string_methods() -> HashMap<&'static str, MethodFn> {
     let mut map = HashMap::new();
     map.insert("len", string_len as MethodFn);
@@ -220,6 +260,14 @@ pub fn array_methods() -> HashMap<&'static str, MethodFn> {
     map.insert("remove", array_remove as MethodFn);
     map.insert("sum", array_sum as MethodFn);
     map.insert("map", array_map as MethodFn);
+    map
+}
+
+pub fn hashmap_methods() -> HashMap<&'static str, MethodFn> {
+    let mut map = HashMap::new();
+    map.insert("len", hashmap_len as MethodFn);
+    map.insert("get", hashmap_get as MethodFn);
+    map.insert("set", hashmap_set as MethodFn);
     map
 }
 
@@ -297,6 +345,7 @@ pub fn default_env() -> HashMap<String, Value> {
                     Value::Float(_) => Value::String("Float".to_string()),
                     Value::String(_) => Value::String("String".to_string()),
                     Value::Array(_) => Value::String("Array".to_string()),
+                    Value::HashMapV(_) => Value::String("HashMap".to_string()),
                     Value::Module(_) => Value::String("Module".to_string()),
                     Value::BuiltInFunction(_) => Value::String("BuiltInFunction".to_string()),
                     Value::UserFunction { .. } => Value::String("UserFunction".to_string()),
