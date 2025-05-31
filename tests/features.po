@@ -1,0 +1,137 @@
+/* Pluto Language Comprehensive Feature Test */
+
+/* --- Variables and Types --- */
+let x = 42;
+let y = 3.14;
+let s = "hello";
+let b = true;
+let arr = [1, 2, 3];
+let map = {"a": 1, "b": 2};
+let n; /* uninitialized */
+
+print("x:", x, "y:", y, "s:", s, "b:", b, "arr:", arr, "map:", map, "n:", n);
+
+/* --- Arithmetic and Assignment --- */
+x++;
+x--;
+x += 10;
+x -= 2;
+x *= 2;
+x /= 5;
+print("x after ops:", x);
+
+y += 2.86;
+y *= 2;
+print("y after ops:", y);
+
+let z = x + y * 2 - 1 / 2 % 2;
+print("z:", z);
+
+/* --- String Operations --- */
+let t = s + " world";
+print("t:", t);
+print("t.len():", t.len());
+print("t.to_upper():", t.to_upper());
+print("t.to_lower():", t.to_lower());
+print("\"abcde\".char_at(2):", "abcde".char_at(2));
+print("\"123\".to_int():", "123".to_int());
+print("\"3.14\".to_float():", "3.14".to_float());
+
+/* --- Boolean Logic --- */
+let bool1 = true && false;
+let bool2 = true || false;
+let bool3 = !false;
+print("bool1:", bool1, "bool2:", bool2, "bool3:", bool3);
+
+/* --- Type Detection --- */
+print("type(x):", type(x));
+print("type(y):", type(y));
+print("type(s):", type(s));
+print("type(arr):", type(arr));
+print("type(map):", type(map));
+print("type(b):", type(b));
+
+/* --- Arrays --- */
+let arr2 = arr.push(4);
+print("arr2 (push):", arr2);
+let arr3 = arr2.pop();
+print("arr3 (pop):", arr3);
+let arr4 = arr3.remove(1);
+print("arr4 (remove):", arr4);
+print("arr4.sum():", arr4.sum());
+print("arr4.len():", arr4.len());
+print("arr4[0]:", arr4[0]);
+
+/* --- HashMap --- */
+let map2 = map.set("c", 3);
+print("map2:", map2);
+print("map2.len():", map2.len());
+print("map2.get(\"b\"):", map2.get("b"));
+
+/* --- If/Else --- */
+if x > 40 {
+    print("x is greater than 40");
+} else {
+    print("x is not greater than 40");
+}
+
+/* --- While Loop --- */
+let i = 0;
+while (i < 3) {
+    print("while i:", i);
+    i++;
+}
+
+/* --- For Loop --- */
+for (let j = 0; j < 3; j++) {
+    print("for j:", j);
+}
+
+/* --- Functions --- */
+fn add(a, b) {
+    return a + b;
+}
+print("add(2, 3):", add(2, 3));
+
+fn no_return(a) {
+    a * 2;
+}
+print("no_return(5):", no_return(5)); /* Should print 10 */
+
+/* --- Arrow Functions / Anonymous Functions --- */
+let square = (x) -> x * x;
+print("square(4):", square(4));
+
+let inc = (x) -> { return x + 1; };
+print("inc(7):", inc(7));
+
+/* --- Const --- */
+const PI = 3.14159;
+print("PI:", PI);
+const double = (x) -> x * 2;
+print("double(6):", double(6));
+
+/* --- Array map with function --- */
+let nums = [1, 2, 3, 4];
+let squares = nums.map(square);
+print("squares:", squares);
+
+/* --- Input/Output --- */
+/*
+    Uncomment to test interactively
+    let name = input("What is your name? ");
+    print(format("Hello, {}", name));
+*/
+
+/* --- Built-in Modules --- */
+print("Math.pi:", Math.pi);
+print("Math.pow(2, 8):", Math.pow(2, 8));
+print("Time.now():", Time.now());
+
+/* --- Comments --- */
+/*
+  This is a block comment.
+  It should be ignored by the interpreter.
+*/
+
+print("All features tested!");

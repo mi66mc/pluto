@@ -9,7 +9,7 @@ pub fn tokenize(input: &str) -> Vec<Token> {
     while position < bytes.len() {
         let current_char = bytes[position] as char;
 
-        // Skip whitespace
+        // skip whitespace
         if current_char.is_whitespace() {
             position += 1;
             continue;
@@ -58,16 +58,42 @@ pub fn tokenize(input: &str) -> Vec<Token> {
             '\"' => {
                 let start = position + 1;
                 position += 1;
-                while position < bytes.len() && bytes[position] as char != '\"' {
-                    position += 1;
+                let mut string = String::new();
+                while position < bytes.len() {
+                    let c = bytes[position] as char;
+                    if c == '\\' && position + 1 < bytes.len() {
+                        let next = bytes[position + 1] as char;
+                        match next {
+                            '"' => {
+                                string.push('"');
+                                position += 2;
+                            }
+                            'n' => {
+                                string.push('\n');
+                                position += 2;
+                            }
+                            't' => {
+                                string.push('\t');
+                                position += 2;
+                            }
+                            '\\' => {
+                                string.push('\\');
+                                position += 2;
+                            }
+                            _ => {
+                                string.push(c);
+                                position += 1;
+                            }
+                        }
+                    } else if c == '"' {
+                        position += 1;
+                        break;
+                    } else {
+                        string.push(c);
+                        position += 1;
+                    }
                 }
-                if position < bytes.len() {
-                    let string_literal = &input[start..position];
-                    tokens.push(Token::new(TokenKind::StringLiteral(string_literal.to_string()), start));
-                    position += 1;
-                } else {
-                    tokens.push(Token::new(TokenKind::Unknown('\"'), start));
-                }
+                tokens.push(Token::new(TokenKind::StringLiteral(string), start));
                 continue;
             }
             // '+' => tokens.push(Token::new(TokenKind::Plus, position)),
@@ -196,6 +222,7 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                 let identifier = &input[start..position];
                 let kind = match identifier {
                     "let" => TokenKind::Let,
+                    "const" => TokenKind::Const,
                     "for" => TokenKind::For,
                     "while" => TokenKind::While,
                     "fn" => TokenKind::Fn,

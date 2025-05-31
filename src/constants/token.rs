@@ -38,6 +38,7 @@ pub enum TokenKind {
     Semicolon,
     Comma,
     Let,
+    Const,
     Fn,
     While,
     For,
@@ -57,6 +58,7 @@ pub trait TokenKindTrait {
 impl TokenKindTrait for TokenKind {
     fn to_string(&self) -> String {
         match self {
+            TokenKind::Const => "const".to_string(),
             TokenKind::Null => "null".to_string(),
             TokenKind::ArrowFunc => "->".to_string(),
             TokenKind::PlusPlus => "++".to_string(),

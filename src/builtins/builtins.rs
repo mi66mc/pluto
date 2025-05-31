@@ -162,7 +162,7 @@ fn array_map(v: &Value, args: Vec<Value>) -> Result<Value, String> {
                     }
                     let mut func_env = env.clone();
                     let mut frame = std::collections::HashMap::new();
-                    frame.insert(params[0].clone(), item.clone());
+                    frame.insert(params[0].clone(), (item.clone(), false));
                     func_env.push(frame);
                     let d: Vec<Token> = Vec::new();
             
@@ -271,7 +271,7 @@ pub fn hashmap_methods() -> HashMap<&'static str, MethodFn> {
     map
 }
 
-pub fn default_env() -> HashMap<String, Value> {
+pub fn default_env() -> HashMap<String, (Value, bool)> {
     let mut env = HashMap::new();
 
     // -----------------------------------------------------
@@ -296,7 +296,7 @@ pub fn default_env() -> HashMap<String, Value> {
         return Value::Float(a.powf(b))
     }));
 
-    env.insert("Math".to_string(), Value::Module(math));
+    env.insert("Math".to_string(), (Value::Module(math), true));
 
     // -----------------------------------------------------
 
@@ -319,7 +319,7 @@ pub fn default_env() -> HashMap<String, Value> {
         Value::Number(0)
     }));
 
-    env.insert("Time".to_string(), Value::Module(time));
+    env.insert("Time".to_string(), (Value::Module(time), true));
 
     // -----------------------------------------------------
     // -------------------- GENERAL ------------------------
@@ -327,105 +327,121 @@ pub fn default_env() -> HashMap<String, Value> {
 
     env.insert(
         "print".to_string(),
-        Value::BuiltInFunction(|args| {
+        (
+            Value::BuiltInFunction(|args| {
             for arg in args {
                 println!("{}", arg.to_string());
             }
-            Value::Number(0)
+            Value::Null
         }),
+            true,
+        ),
     );
 
     env.insert(
         "type".to_string(),
-        Value::BuiltInFunction(|args| {
-            if let Some(arg) = args.get(0) {
-                match arg {
-                    Value::Null => Value::String("Null".to_string()),
-                    Value::Bool(_) => Value::String("Bool".to_string()),
-                    Value::Number(_) => Value::String("Number".to_string()),
-                    Value::Float(_) => Value::String("Float".to_string()),
-                    Value::String(_) => Value::String("String".to_string()),
-                    Value::Array(_) => Value::String("Array".to_string()),
-                    Value::HashMapV(_) => Value::String("HashMap".to_string()),
-                    Value::Module(_) => Value::String("Module".to_string()),
-                    Value::BuiltInFunction(_) => Value::String("BuiltInFunction".to_string()),
-                    Value::UserFunction { .. } => Value::String("UserFunction".to_string()),
+        (
+            Value::BuiltInFunction(|args| {
+                if let Some(arg) = args.get(0) {
+                    match arg {
+                        Value::Null => Value::String("Null".to_string()),
+                        Value::Bool(_) => Value::String("Bool".to_string()),
+                        Value::Number(_) => Value::String("Number".to_string()),
+                        Value::Float(_) => Value::String("Float".to_string()),
+                        Value::String(_) => Value::String("String".to_string()),
+                        Value::Array(_) => Value::String("Array".to_string()),
+                        Value::HashMapV(_) => Value::String("HashMap".to_string()),
+                        Value::Module(_) => Value::String("Module".to_string()),
+                        Value::BuiltInFunction(_) => Value::String("BuiltInFunction".to_string()),
+                        Value::UserFunction { .. } => Value::String("UserFunction".to_string()),
+                    }
+                } else {
+                    Value::String("UNKNOWN".to_string())
                 }
-            } else {
-                Value::String("UNKNOWN".to_string())
-            }
-        }),
+            }),
+            true,
+        ),
     );
 
     env.insert(
         "input".to_string(), 
-        Value::BuiltInFunction(|args| {
-            let r;
-            if let Some(Value::String(prompt)) = args.get(0) {
-                let mut input = String::new();
-                print!("{}", prompt);
-                let _ = std::io::stdout().flush();
-                std::io::stdin()
-                    .read_line(&mut input)
-                    .expect("Failed to read line");
-            
-                r = input.trim().to_string();
-            } else {
-                let mut input = String::new();
-                let _ = std::io::stdout().flush();
-                std::io::stdin()
-                    .read_line(&mut input)
-                    .expect("Failed to read line");
-            
-                r = input.trim().to_string();
-            }
-            Value::String(r)
-        }),
+        (
+            Value::BuiltInFunction(|args| {
+                let r;
+                if let Some(Value::String(prompt)) = args.get(0) {
+                    let mut input = String::new();
+                    print!("{}", prompt);
+                    let _ = std::io::stdout().flush();
+                    std::io::stdin()
+                        .read_line(&mut input)
+                        .expect("Failed to read line");
+                
+                    r = input.trim().to_string();
+                } else {
+                    let mut input = String::new();
+                    let _ = std::io::stdout().flush();
+                    std::io::stdin()
+                        .read_line(&mut input)
+                        .expect("Failed to read line");
+                
+                    r = input.trim().to_string();
+                }
+                Value::String(r)
+            }),
+            true
+        )
     );
 
     env.insert(
         "exit".to_string(),
-        Value::BuiltInFunction(|args| {
-            if let Some(Value::Number(n)) = args.get(0) {
-                std::process::exit(*n as i32);
-            } else {
-                std::process::exit(0);
-            }
-        }),
+        (
+            Value::BuiltInFunction(|args| {
+                if let Some(Value::Number(n)) = args.get(0) {
+                    std::process::exit(*n as i32);
+                } else {
+                    std::process::exit(0);
+                }
+            }),
+            true,
+        ),
+
     );
     env.insert(
         "format".to_string(),
-        Value::BuiltInFunction(|args| {
-            if args.is_empty() {
-                return Value::String("".to_string());
-            }
-            let template = match &args[0] {
-                Value::String(s) => s,
-                _ => return Value::String("".to_string()),
-            };
+        (
+            Value::BuiltInFunction(|args| {
+                if args.is_empty() {
+                    return Value::String("".to_string());
+                }
+                let template = match &args[0] {
+                    Value::String(s) => s,
+                    _ => return Value::String("".to_string()),
+                };
 
-            let mut result = String::new();
-            let mut arg_iter = args.iter().skip(1);
-            let mut chars = template.chars().peekable();
+                let mut result = String::new();
+                let mut arg_iter = args.iter().skip(1);
+                let mut chars = template.chars().peekable();
 
-            while let Some(c) = chars.next() {
-                if c == '{' {
-                    if let Some(&next) = chars.peek() {
-                        if next == '}' {
-                            chars.next(); // '}'
-                            if let Some(val) = arg_iter.next() {
-                                result.push_str(&val.to_string());
-                            } else {
-                                result.push_str("{}");
+                while let Some(c) = chars.next() {
+                    if c == '{' {
+                        if let Some(&next) = chars.peek() {
+                            if next == '}' {
+                                chars.next(); // '}'
+                                if let Some(val) = arg_iter.next() {
+                                    result.push_str(&val.to_string());
+                                } else {
+                                    result.push_str("{}");
+                                }
+                                continue;
                             }
-                            continue;
                         }
                     }
+                    result.push(c);
                 }
-                result.push(c);
-            }
-            Value::String(result)
-        }),
+                Value::String(result)
+            }),
+            true,
+        )
     );
 
     env

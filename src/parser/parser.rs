@@ -31,6 +31,8 @@ impl<'a> Parser<'a> {
     fn parse_statement(&mut self) -> Result<ASTNode, String> {
         if self.match_kind(TokenKind::Let) {
             self.parse_variable_declaration()
+        } else if self.match_kind(TokenKind::Const) {
+            self.parse_const_declaration()
         } else if self.match_kind(TokenKind::While) {
             self.parse_while_statement()
         } else if self.match_kind(TokenKind::Return) {
@@ -119,6 +121,25 @@ impl<'a> Parser<'a> {
         } else {
             self.consume(TokenKind::Semicolon, "Expected ';' after variable declaration")?;
             Ok(ASTNode::VariableDeclaration(name, None))
+        }
+    }
+
+    fn parse_const_declaration(&mut self) -> Result<ASTNode, String> {
+        let name = if let Some(TokenKind::Identifier(id)) = self.peek_kind().cloned() {
+            self.advance();
+            id
+        } else {
+            return Err("Expected identifier after 'const'".into());
+        };
+
+        if self.peek_kind() == Some(&TokenKind::Equal) {
+            self.advance(); // '='
+            let expr = self.parse_expression(0)?;
+            self.consume(TokenKind::Semicolon, "Expected ';' after constant declaration")?;
+            Ok(ASTNode::ConstDeclaration(name, Some(Box::new(expr))))
+        } else {
+            self.consume(TokenKind::Semicolon, "Expected ';' after constant declaration")?;
+            Ok(ASTNode::ConstDeclaration(name, None))
         }
     }
 
@@ -240,7 +261,7 @@ impl<'a> Parser<'a> {
                             if self.peek_kind() == Some(&TokenKind::RParen) {
                                 break;
                             }
-                            self.consume(TokenKind::Comma, "Expected ',' or ')' in argument list")?;
+                            self.consume(TokenKind::Comma, "Expected ',' or ')' in function arguments")?;
                         }
                     }
                     self.consume(TokenKind::RParen, "Expected ')' after arguments")?;
@@ -250,37 +271,65 @@ impl<'a> Parser<'a> {
                 }
             }
             TokenKind::LParen => {
-                // arrow function
+                let start_pos = self.current;
+
                 let mut params = Vec::new();
+                let mut is_param_list = true;
+                let mut temp_pos = self.current;
+
                 if self.peek_kind() != Some(&TokenKind::RParen) {
                     loop {
-                        if let Some(TokenKind::Identifier(param)) = self.peek_kind().cloned() {
-                            params.push(param);
-                            self.advance();
+                        if let Some(TokenKind::Identifier(_)) = self.tokens.get(temp_pos).map(|t| &t.kind) {
+                            temp_pos += 1;
                         } else {
-                            return Err("Expected identifier in function parameters".into());
-                        }
-                        if self.peek_kind() == Some(&TokenKind::RParen) {
+                            is_param_list = false;
                             break;
                         }
-                        self.consume(TokenKind::Comma, "Expected ',' or ')' in function parameters")?;
+                        if self.tokens.get(temp_pos).map(|t| &t.kind) == Some(&TokenKind::RParen) {
+                            temp_pos += 1;
+                            break;
+                        }
+                        if self.tokens.get(temp_pos).map(|t| &t.kind) == Some(&TokenKind::Comma) {
+                            temp_pos += 1;
+                        } else {
+                            is_param_list = false;
+                            break;
+                        }
                     }
+                } else {
+                    temp_pos += 1;
                 }
-                self.consume(TokenKind::RParen, "Expected ')' after function parameters")?;
 
-                if self.peek_kind() == Some(&TokenKind::ArrowFunc) {
-                    self.advance(); // '->'
+                // check '->'
+                if is_param_list && self.tokens.get(temp_pos).map(|t| &t.kind) == Some(&TokenKind::ArrowFunc) {
+                    if self.peek_kind() != Some(&TokenKind::RParen) {
+                        loop {
+                            if let Some(TokenKind::Identifier(param)) = self.peek_kind().cloned() {
+                                params.push(param);
+                                self.advance();
+                            } else {
+                                return Err("Expected identifier in function parameters".into());
+                            }
+                            if self.peek_kind() == Some(&TokenKind::RParen) {
+                                break;
+                            }
+                            self.consume(TokenKind::Comma, "Expected ',' or ')' in function parameters")?;
+                        }
+                    }
+                    self.consume(TokenKind::RParen, "Expected ')' after function parameters")?;
+                    self.consume(TokenKind::ArrowFunc, "Expected '->' after function parameters")?;
                     let body = if self.peek_kind() == Some(&TokenKind::LBrace) {
                         self.parse_block_or_single_statement()?
                     } else {
                         self.parse_expression(0)?
                     };
                     return Ok(ASTNode::AnonymousFunction(params, Box::new(body)));
+                } else {
+                    self.current = start_pos;
+                    let expr = self.parse_expression(0)?;
+                    self.consume(TokenKind::RParen, "Expected ')' after expression")?;
+                    return Ok(expr);
                 }
-
-                let expr = self.parse_expression(0)?;
-                self.consume(TokenKind::RParen, "Expected ')' after expression")?;
-                expr
             }
             TokenKind::Not => {
                 let expr = self.parse_primary()?;

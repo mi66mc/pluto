@@ -24,7 +24,7 @@ pub enum Value {
     UserFunction {
         params: Vec<String>,
         body: Box<ASTNode>,
-        env: Vec<HashMap<String, Value>>,
+        env: Vec<HashMap<String, (Value, bool)>>,
     },
     String(String),
     Module(HashMap<String, Value>),
@@ -115,7 +115,7 @@ impl fmt::Display for Value {
 
 pub struct Evaluator<'a> {
     pub parser: Parser<'a>,
-    pub env_stack: Vec<HashMap<String, Value>>,
+    pub env_stack: Vec<HashMap<String, (Value, bool)>>,
 }
 
 impl<'a> Evaluator<'a> {
@@ -126,7 +126,7 @@ impl<'a> Evaluator<'a> {
         }
     }
 
-    fn current_env_mut(&mut self) -> &mut HashMap<String, Value> {
+    fn current_env_mut(&mut self) -> &mut HashMap<String, (Value, bool)> {
         self.env_stack.last_mut().unwrap()
     }
 
@@ -136,7 +136,7 @@ impl<'a> Evaluator<'a> {
 
     fn lookup(&self, name: &str) -> Option<Value> {
         for env in self.env_stack.iter().rev() {
-            if let Some(val) = env.get(name) {
+            if let Some((val, _)) = env.get(name) {
                 return Some(val.clone());
             }
         }
@@ -216,7 +216,25 @@ impl<'a> Evaluator<'a> {
                 } else {
                     Value::Null
                 };
-                self.current_env_mut().insert(name.clone(), val.clone());
+                self.current_env_mut().insert(name.clone(), (val.clone(), false));
+                Ok(EvalResult::Value(val))
+            }
+
+            ASTNode::ConstDeclaration(name, maybe_expr) => {
+                if self.current_env_mut().contains_key(name) {
+                    return Err(format!("Variable '{}' already declared", name));
+                }
+                let val = if let Some(expr) = maybe_expr {
+                    match self.eval(expr)? {
+                        EvalResult::Value(v) => v,
+                        EvalResult::Return(v) => return Ok(EvalResult::Return(v)),
+                        EvalResult::Break => return Ok(EvalResult::Break),
+                        EvalResult::Continue => return Ok(EvalResult::Continue),
+                    }
+                } else {
+                    Value::Null
+                };
+                self.current_env_mut().insert(name.clone(), (val.clone(), true));
                 Ok(EvalResult::Value(val))
             }
 
@@ -228,7 +246,12 @@ impl<'a> Evaluator<'a> {
                     EvalResult::Continue => return Ok(EvalResult::Continue),
                 };
                 for env in self.env_stack.iter_mut().rev() {
-                    if let Some(val) = env.get_mut(name) {
+                    if let Some((_, is_const)) = env.get(name) {
+                        if *is_const {
+                            return Err(format!("Cannot assign to constant '{}'", name));
+                        }
+                    }
+                    if let Some((val, _)) = env.get_mut(name) {
                         *val = value.clone();
                         return Ok(EvalResult::Value(value));
                     }
@@ -298,7 +321,7 @@ impl<'a> Evaluator<'a> {
                                 return Err(format!("Function '{}' expects {} arguments, got {}", name, params.len(), args.len()));
                             }
                             let mut new_env = env.clone();
-                            let mut local_env = HashMap::new();
+                            let mut local_env: HashMap<String, (Value, bool)> = HashMap::new();
                             for (param, arg) in params.iter().zip(args.iter()) {
                                 let v = match self.eval(arg)? {
                                     EvalResult::Value(v) => v,
@@ -306,7 +329,7 @@ impl<'a> Evaluator<'a> {
                                     EvalResult::Break => return Ok(EvalResult::Break),
                                     EvalResult::Continue => return Ok(EvalResult::Continue),
                                 };
-                                local_env.insert(param.clone(), v);
+                                local_env.insert(param.clone(), (v, false));
                             }
                             new_env.push(local_env);
                             let dummy_tokens = Vec::new();
@@ -317,9 +340,8 @@ impl<'a> Evaluator<'a> {
                             let result = evaluator.eval(&body)?;
                             match result {
                                 EvalResult::Return(val) => Ok(EvalResult::Value(val)),
-                                EvalResult::Value(_) => {
-                                    // if not explicitly returning, return null
-                                    Ok(EvalResult::Value(Value::Null))
+                                EvalResult::Value(val) => {
+                                    Ok(EvalResult::Value(val))
                                 },
                                 EvalResult::Break => return Ok(EvalResult::Break),
                                 EvalResult::Continue => return Ok(EvalResult::Continue),
@@ -480,7 +502,7 @@ impl<'a> Evaluator<'a> {
                         EvalResult::Break => return Ok(EvalResult::Break),
                         EvalResult::Continue => return Ok(EvalResult::Continue),
                     };
-                    if let Some(val) = self.current_env_mut().get_mut(var_name) {
+                    if let Some((val, _)) = self.current_env_mut().get_mut(var_name) {
                         if let Value::Array(arr) = val {
                             if let Value::Number(idx) = index_val {
                                 let idx = idx as usize;
@@ -548,7 +570,7 @@ impl<'a> Evaluator<'a> {
                     body: Box::new((**body).clone()),
                     env: self.env_stack.clone(),
                 };
-                self.current_env_mut().insert(name.clone(), func);
+                self.current_env_mut().insert(name.clone(), (func, false));
                 Ok(EvalResult::Value(Value::Null))
             }
 
@@ -628,7 +650,7 @@ impl<'a> Evaluator<'a> {
                             let old = *n;
                             *n += 1;
                             for env in self.env_stack.iter_mut().rev() {
-                                if let Some(Value::Number(v)) = env.get_mut(name) {
+                                if let Some((Value::Number(v), _)) = env.get_mut(name) {
                                     *v = *n;
                                     break;
                             }
@@ -639,7 +661,7 @@ impl<'a> Evaluator<'a> {
                             let old = *n;
                             *n += 1.0;
                             for env in self.env_stack.iter_mut().rev() {
-                                if let Some(Value::Float(v)) = env.get_mut(name) {
+                                if let Some((Value::Float(v), _)) = env.get_mut(name) {
                                     *v = *n;
                                     break;
                                 }
@@ -650,7 +672,7 @@ impl<'a> Evaluator<'a> {
                             let old = *n;
                             *n -= 1;
                             for env in self.env_stack.iter_mut().rev() {
-                                if let Some(Value::Number(v)) = env.get_mut(name) {
+                                if let Some((Value::Number(v), _)) = env.get_mut(name) {
                                     *v = *n;
                                     break;
                             }
@@ -661,7 +683,7 @@ impl<'a> Evaluator<'a> {
                             let old = *n;
                             *n -= 1.0;
                             for env in self.env_stack.iter_mut().rev() {
-                                if let Some(Value::Float(v)) = env.get_mut(name) {
+                                if let Some((Value::Float(v), _)) = env.get_mut(name) {
                                     *v = *n;
                                     break;
                                 }
@@ -754,8 +776,8 @@ impl<'a> Evaluator<'a> {
                         _ => return Err("Unsupported assignment operator or type".to_string()),
                     };
                     for env in self.env_stack.iter_mut().rev() {
-                        if let Some(v) = env.get_mut(name) {
-                            *v = new_val.clone();
+                        if let Some((_, is_const)) = env.get_mut(name) {
+                            *env.get_mut(name).unwrap() = (new_val.clone(), *is_const);
                             break;
                         }
                     }
@@ -777,7 +799,9 @@ impl<'a> Evaluator<'a> {
                 Ok(EvalResult::Value(Value::HashMapV(map)))
             }
 
-            _ => {println!("{:?}", node); Err("Unsupported AST node".into())},
+            ASTNode::Break => Ok(EvalResult::Break),
+            
+            ASTNode::Continue => Ok(EvalResult::Continue),
         }
     }
 

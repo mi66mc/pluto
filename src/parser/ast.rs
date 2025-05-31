@@ -3,6 +3,7 @@ pub enum ASTNode {
     Program(Vec<ASTNode>),
     Block(Vec<ASTNode>),
     VariableDeclaration(String, Option<Box<ASTNode>>),
+    ConstDeclaration(String, Option<Box<ASTNode>>),
     Assignment(String, Box<ASTNode>),
     BinaryExpression(Box<ASTNode>, String, Box<ASTNode>),
     UnaryExpression(String, Box<ASTNode>),
@@ -43,6 +44,14 @@ pub trait ASTNodeTrait {
 impl ASTNodeTrait for ASTNode {
     fn to_string(&self) -> String {
         match self {
+            ASTNode::ConstDeclaration(name, initializer) => {
+                let init_str = if let Some(init) = initializer {
+                    format!(" = {}", init.to_string())
+                } else {
+                    String::new()
+                };
+                format!("const {}{}", name, init_str)
+            }
             ASTNode::NullLiteral => "null".to_string(),
             ASTNode::HashMapLiteral(pairs) => {
                 let pairs_str: Vec<String> = pairs
