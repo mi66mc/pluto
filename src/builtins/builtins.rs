@@ -340,6 +340,7 @@ pub fn default_env() -> HashMap<String, Value> {
         Value::BuiltInFunction(|args| {
             if let Some(arg) = args.get(0) {
                 match arg {
+                    Value::Null => Value::String("Null".to_string()),
                     Value::Bool(_) => Value::String("Bool".to_string()),
                     Value::Number(_) => Value::String("Number".to_string()),
                     Value::Float(_) => Value::String("Float".to_string()),

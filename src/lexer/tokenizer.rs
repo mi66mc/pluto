@@ -205,6 +205,7 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                     "false" => TokenKind::Boolean(false),
                     "break" => TokenKind::Break,
                     "continue" => TokenKind::Continue,
+                    "null" => TokenKind::Null,
                     _ => TokenKind::Identifier(identifier.to_string()),
                 };
                 // };

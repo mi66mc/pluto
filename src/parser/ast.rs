@@ -10,6 +10,7 @@ pub enum ASTNode {
     AssignmentOp(String, Box<ASTNode>, Box<ASTNode>),
     NumberLiteral(i64),
     FloatLiteral(f64),
+    NullLiteral,
     StringLiteral(String),
     ArrayLiteral(Vec<Box<ASTNode>>),
     HashMapLiteral(Vec<(String, Box<ASTNode>)>),
@@ -42,6 +43,7 @@ pub trait ASTNodeTrait {
 impl ASTNodeTrait for ASTNode {
     fn to_string(&self) -> String {
         match self {
+            ASTNode::NullLiteral => "null".to_string(),
             ASTNode::HashMapLiteral(pairs) => {
                 let pairs_str: Vec<String> = pairs
                     .iter()

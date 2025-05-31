@@ -286,6 +286,7 @@ impl<'a> Parser<'a> {
                 let expr = self.parse_primary()?;
                 ASTNode::UnaryExpression("!".to_string(), Box::new(expr))
             }
+            TokenKind::Null => ASTNode::NullLiteral,
             TokenKind::LBrace => {
                 // hashmap
                 let mut pairs = Vec::new();
@@ -307,6 +308,12 @@ impl<'a> Parser<'a> {
                 }
                 self.consume(TokenKind::RBrace, "Expected '}' after hash map literal")?;
                 ASTNode::HashMapLiteral(pairs)
+            }
+            TokenKind::While => {
+                return self.parse_while_statement();
+            }
+            TokenKind::For => {
+                return self.parse_for_statement();
             }
             other => return Err(format!("Unexpected token: {:?}", other)),
         };

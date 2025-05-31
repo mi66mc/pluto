@@ -29,7 +29,8 @@ pub enum Value {
     String(String),
     Module(HashMap<String, Value>),
     Array(Vec<Value>),
-    HashMapV(HashMap<String, Value>)
+    HashMapV(HashMap<String, Value>),
+    Null
     // add more
 }
 
@@ -94,6 +95,7 @@ impl fmt::Display for Value {
             Value::Number(n) => write!(f, "{}", n),
             Value::Float(fl) => write!(f, "{}", fl),
             Value::String(s) => write!(f, "{}", s),
+            Value::Null => write!(f, "null"),
             Value::BuiltInFunction(_) => write!(f, "<built-in function>"),
             Value::Module(_) => write!(f, "<module>"),
             Value::UserFunction { params, body, env } => {
@@ -167,7 +169,7 @@ impl<'a> Evaluator<'a> {
     pub fn eval(&mut self, node: &ASTNode) -> Result<EvalResult, String> {
         match node {
             ASTNode::Program(statements) => {
-                let mut last = Value::Number(0);
+                let mut last = Value::Null;
                 for stmt in statements {
                     match self.eval(stmt)? {
                         EvalResult::Value(val) => last = val,
@@ -181,7 +183,7 @@ impl<'a> Evaluator<'a> {
 
             ASTNode::Block(statements) => {
                 self.env_stack.push(HashMap::new());
-                let mut last = Value::Number(0);
+                let mut last = Value::Null;
                 for stmt in statements {
                     match self.eval(stmt)? {
                         EvalResult::Value(val) => last = val,
@@ -212,7 +214,7 @@ impl<'a> Evaluator<'a> {
                         EvalResult::Continue => return Ok(EvalResult::Continue),
                     }
                 } else {
-                    Value::Number(0)
+                    Value::Null
                 };
                 self.current_env_mut().insert(name.clone(), val.clone());
                 Ok(EvalResult::Value(val))
@@ -255,6 +257,8 @@ impl<'a> Evaluator<'a> {
             ASTNode::FloatLiteral(f) => Ok(EvalResult::Value(Value::Float(*f))),
 
             ASTNode::StringLiteral(s) => Ok(EvalResult::Value(Value::String(s.clone()))),
+
+            ASTNode::NullLiteral => Ok(EvalResult::Value(Value::Null)),
 
             ASTNode::Identifier(name) => {
                 if let Some(val) = self.lookup(name) {
@@ -313,7 +317,10 @@ impl<'a> Evaluator<'a> {
                             let result = evaluator.eval(&body)?;
                             match result {
                                 EvalResult::Return(val) => Ok(EvalResult::Value(val)),
-                                EvalResult::Value(val) => Ok(EvalResult::Value(val)),
+                                EvalResult::Value(_) => {
+                                    // if not explicitly returning, return null
+                                    Ok(EvalResult::Value(Value::Null))
+                                },
                                 EvalResult::Break => return Ok(EvalResult::Break),
                                 EvalResult::Continue => return Ok(EvalResult::Continue),
                             }
@@ -387,7 +394,7 @@ impl<'a> Evaluator<'a> {
                         if let Some(else_b) = else_branch {
                             self.eval(else_b)
                         } else {
-                            Ok(EvalResult::Value(Value::Number(0)))
+                            Ok(EvalResult::Value(Value::Null))
                         }
                     }
                     _ => Err("Condition in 'if' must be a boolean".to_string()),
@@ -542,11 +549,11 @@ impl<'a> Evaluator<'a> {
                     env: self.env_stack.clone(),
                 };
                 self.current_env_mut().insert(name.clone(), func);
-                Ok(EvalResult::Value(Value::Number(0)))
+                Ok(EvalResult::Value(Value::Null))
             }
 
             ASTNode::WhileStatement(condition, body) => {
-                let mut last = Value::Number(0);
+                let mut last = Value::Null;
                 loop {
                     let cond_val = match self.eval(condition)? {
                         EvalResult::Value(v) => v,
@@ -576,7 +583,7 @@ impl<'a> Evaluator<'a> {
                         EvalResult::Continue => return Ok(EvalResult::Continue),
                     }
                 } else {
-                    Value::Number(0)
+                    Value::Null
                 };
                 Ok(EvalResult::Return(val))
             }

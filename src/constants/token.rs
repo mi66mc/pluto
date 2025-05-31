@@ -5,6 +5,7 @@ pub enum TokenKind {
     Number(i64),
     Float(f64),
     StringLiteral(String),
+    Null,
     Dot,
     Plus,
     Minus,
@@ -56,6 +57,7 @@ pub trait TokenKindTrait {
 impl TokenKindTrait for TokenKind {
     fn to_string(&self) -> String {
         match self {
+            TokenKind::Null => "null".to_string(),
             TokenKind::ArrowFunc => "->".to_string(),
             TokenKind::PlusPlus => "++".to_string(),
             TokenKind::MinusMinus => "--".to_string(),
