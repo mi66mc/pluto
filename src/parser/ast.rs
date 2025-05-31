@@ -16,14 +16,14 @@ pub enum ASTNode {
     ArrayLiteral(Vec<Box<ASTNode>>),
     HashMapLiteral(Vec<(String, Box<ASTNode>)>),
     Identifier(String),
-    FunctionDeclaration(String, Vec<String>, Box<ASTNode>),
-    AnonymousFunction(Vec<String>, Box<ASTNode>),
-    FunctionCall(String, Vec<Box<ASTNode>>),
+    FunctionDeclaration(String, Vec<(String, Option<Box<ASTNode>>)>, Box<ASTNode>),
+    AnonymousFunction(Vec<(String, Option<Box<ASTNode>>)>, Box<ASTNode>),
+    FunctionCall(String, Vec<(Option<String>, Box<ASTNode>)>),
     IfStatement(Box<ASTNode>, Box<ASTNode>, Option<Box<ASTNode>>),
     WhileStatement(Box<ASTNode>, Box<ASTNode>),
     ReturnStatement(Option<Box<ASTNode>>),
     MemberAccess(Box<ASTNode>, String), // Math.pi
-    MethodCall(Box<ASTNode>, String, Vec<Box<ASTNode>>), // Math.pow(x,y)
+    MethodCall(Box<ASTNode>, String, Vec<(Option<String>, Box<ASTNode>)>),
     BooleanLiteral(bool),
     IndexAccess(Box<ASTNode>, Box<ASTNode>),
     AssignmentIndex(Box<ASTNode>, Box<ASTNode>, Box<ASTNode>), // array, index, value
@@ -61,7 +61,7 @@ impl ASTNodeTrait for ASTNode {
                 format!("{{{}}}", pairs_str.join(", "))
             }
             ASTNode::AnonymousFunction(params, body) => {
-                let params_str = params.join(", ");
+                let params_str = params.iter().map(|(param, _)| param.clone()).collect::<Vec<String>>().join(", ");
                 format!("({}) {}", params_str, body.to_string())
             }
             ASTNode::PostfixUnaryExpression(operator, expression) => {
@@ -108,11 +108,11 @@ impl ASTNodeTrait for ASTNode {
             ASTNode::StringLiteral(value) => format!("\"{}\"", value),
             ASTNode::Identifier(name) => name.clone(),
             ASTNode::FunctionDeclaration(name, params, body) => {
-                let params_str = params.join(", ");
+                let params_str = params.iter().map(|(param, _)| param.clone()).collect::<Vec<String>>().join(", ");
                 format!("fn {}({}) {}", name, params_str, body.to_string())
             }
             ASTNode::FunctionCall(name, args) => {
-                let args_str: Vec<String> = args.iter().map(|arg| arg.to_string()).collect();
+                let args_str: Vec<String> = args.iter().map(|(arg, _)| arg.clone().unwrap_or_default()).collect();
                 format!("{}({})", name, args_str.join(", "))
             }
             ASTNode::IfStatement(condition, then_branch, else_branch) => {
@@ -133,7 +133,7 @@ impl ASTNodeTrait for ASTNode {
             }
             ASTNode::MemberAccess(object, property) => format!("{}.{}", object.to_string(), property),
             ASTNode::MethodCall(object, method, args) => {
-                let args_str: Vec<String> = args.iter().map(|arg| arg.to_string()).collect();
+                let args_str: Vec<String> = args.iter().map(|(arg, _)| arg.clone().unwrap_or_default()).collect();
                 format!("{}.{}/{}", object.to_string(), method, args_str.join(", "))
             }
             ASTNode::BooleanLiteral(value) => value.to_string(),

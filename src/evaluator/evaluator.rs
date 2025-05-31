@@ -22,7 +22,7 @@ pub enum Value {
     Float(f64),
     BuiltInFunction(fn(Vec<Value>) -> Value),
     UserFunction {
-        params: Vec<String>,
+        params: Vec<(String, Option<Box<ASTNode>>)>,
         body: Box<ASTNode>,
         env: Vec<HashMap<String, (Value, bool)>>,
     },
@@ -99,7 +99,7 @@ impl fmt::Display for Value {
             Value::BuiltInFunction(_) => write!(f, "<built-in function>"),
             Value::Module(_) => write!(f, "<module>"),
             Value::UserFunction { params, body, env } => {
-                let params_str = params.join(", ");
+                let params_str = params.iter().map(|(name, _)| name.clone()).collect::<Vec<_>>().join(", ");
                 write!(f, "<function: params=[{}], body={:?}, env_size={} >", params_str, body, env.len())
             }
             Value::Array(arr) => write!(f, "[{}]", arr.iter().map(|v| v.to_string()).collect::<Vec<_>>().join(", ")),
@@ -304,7 +304,7 @@ impl<'a> Evaluator<'a> {
                     match val {
                         Value::BuiltInFunction(f) => {
                             let mut arg_values = Vec::new();
-                            for arg in args {
+                            for (_, arg) in args {
                                 let v = match self.eval(arg)? {
                                     EvalResult::Value(v) => v,
                                     EvalResult::Return(v) => return Ok(EvalResult::Return(v)),
@@ -317,20 +317,70 @@ impl<'a> Evaluator<'a> {
                             Ok(EvalResult::Value(result))
                         }
                         Value::UserFunction { params, body, env } => {
-                            if args.len() != params.len() {
-                                return Err(format!("Function '{}' expects {} arguments, got {}", name, params.len(), args.len()));
-                            }
                             let mut new_env = env.clone();
                             let mut local_env: HashMap<String, (Value, bool)> = HashMap::new();
-                            for (param, arg) in params.iter().zip(args.iter()) {
+
+                            let mut evaluated_args = Vec::new();
+                            for (name, arg) in args {
                                 let v = match self.eval(arg)? {
                                     EvalResult::Value(v) => v,
                                     EvalResult::Return(v) => return Ok(EvalResult::Return(v)),
                                     EvalResult::Break => return Ok(EvalResult::Break),
                                     EvalResult::Continue => return Ok(EvalResult::Continue),
                                 };
-                                local_env.insert(param.clone(), (v, false));
+                                evaluated_args.push((name, v));
                             }
+
+                            let mut used_params = vec![false; params.len()];
+                            
+                            // Process named arguments
+                            for (arg_name, value) in evaluated_args.iter() {
+                                if let Some(name) = arg_name {
+                                    if let Some(pos) = params.iter().position(|p| &p.0 == name) {
+                                        if used_params[pos] {
+                                            return Err(format!("Parameter '{}' specified multiple times", name));
+                                        }
+                                        local_env.insert(name.clone(), (value.clone(), false));
+                                        used_params[pos] = true;
+                                    } else {
+                                        return Err(format!("Unknown parameter name '{}'", name));
+                                    }
+                                }
+                            }
+
+                            // Process positional arguments
+                            let mut pos = 0;
+                            for (arg_name, value) in evaluated_args.iter() {
+                                if arg_name.is_none() {
+                                    while pos < params.len() && used_params[pos] {
+                                        pos += 1;
+                                    }
+                                    if pos >= params.len() {
+                                        return Err("Too many arguments".to_string());
+                                    }
+                                    local_env.insert(params[pos].0.clone(), (value.clone(), false));
+                                    used_params[pos] = true;
+                                    pos += 1;
+                                }
+                            }
+
+                            // Handle default values for unused parameters
+                            for (i, (param_name, default_value)) in params.iter().enumerate() {
+                                if !used_params[i] {
+                                    if let Some(default_expr) = default_value {
+                                        let default_val = match self.eval(default_expr)? {
+                                            EvalResult::Value(v) => v,
+                                            EvalResult::Return(v) => return Ok(EvalResult::Return(v)),
+                                            EvalResult::Break => return Ok(EvalResult::Break),
+                                            EvalResult::Continue => return Ok(EvalResult::Continue),
+                                        };
+                                        local_env.insert(param_name.clone(), (default_val, false));
+                                    } else {
+                                        return Err(format!("Missing argument for parameter '{}'", param_name));
+                                    }
+                                }
+                            }
+
                             new_env.push(local_env);
                             let dummy_tokens = Vec::new();
                             let mut evaluator = Evaluator {
@@ -340,9 +390,7 @@ impl<'a> Evaluator<'a> {
                             let result = evaluator.eval(&body)?;
                             match result {
                                 EvalResult::Return(val) => Ok(EvalResult::Value(val)),
-                                EvalResult::Value(val) => {
-                                    Ok(EvalResult::Value(val))
-                                },
+                                EvalResult::Value(val) => Ok(EvalResult::Value(val)),
                                 EvalResult::Break => return Ok(EvalResult::Break),
                                 EvalResult::Continue => return Ok(EvalResult::Continue),
                             }
@@ -362,7 +410,7 @@ impl<'a> Evaluator<'a> {
                     EvalResult::Continue => return Ok(EvalResult::Continue),
                 };
                 let mut arg_vals = Vec::new();
-                for a in args {
+                for (_, a) in args {
                     let v = match self.eval(a)? {
                         EvalResult::Value(v) => v,
                         EvalResult::Return(v) => return Ok(EvalResult::Return(v)),

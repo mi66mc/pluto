@@ -87,6 +87,7 @@ print("\nTesting Functions:");
 
 fn greet(name="World", greeting="Hello") {
     print(greeting + ", " + name + "!");
+    a ** a;
 }
 
 greet();                    /* Hello, World! */

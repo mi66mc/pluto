@@ -161,8 +161,8 @@ fn array_map(v: &Value, args: Vec<Value>) -> Result<Value, String> {
                         return Err("User function for map must take exactly one argument".into());
                     }
                     let mut func_env = env.clone();
-                    let mut frame = std::collections::HashMap::new();
-                    frame.insert(params[0].clone(), (item.clone(), false));
+                    let mut frame = HashMap::<String, (Value, bool)>::new();
+                    frame.insert(params[0].0.clone(), (item.clone(), false));
                     func_env.push(frame);
                     let d: Vec<Token> = Vec::new();
             
@@ -329,11 +329,36 @@ pub fn default_env() -> HashMap<String, (Value, bool)> {
         "print".to_string(),
         (
             Value::BuiltInFunction(|args| {
-            for arg in args {
-                println!("{}", arg.to_string());
-            }
-            Value::Null
-        }),
+                let mut end = "\n";
+                let mut values = Vec::new();
+                
+                let mut i = 0;
+                while i < args.len() {
+                    if i + 1 < args.len() {
+                        if let Value::String(s) = &args[i] {
+                            if s == "end" {
+                                if let Value::String(e) = &args[i + 1] {
+                                    end = e;
+                                    i += 2;
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+                    values.push(&args[i]);
+                    i += 1;
+                }
+
+                for (i, value) in values.iter().enumerate() {
+                    if i > 0 {
+                        print!(" ");
+                    }
+                    print!("{}", value.to_string());
+                }
+                print!("{}", end);
+                let _ = std::io::stdout().flush();
+                Value::Null
+            }),
             true,
         ),
     );

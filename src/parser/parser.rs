@@ -3,7 +3,7 @@ use crate::parser::ast::ASTNode;
 
 pub struct Parser<'a> {
     tokens: &'a Vec<Token>,
-    current: usize,
+    pub current: usize,
 }
 
 impl<'a> Parser<'a> {
@@ -88,8 +88,14 @@ impl<'a> Parser<'a> {
         if self.peek_kind() != Some(&TokenKind::RParen) {
             loop {
                 if let Some(TokenKind::Identifier(param)) = self.peek_kind().cloned() {
-                    params.push(param);
                     self.advance();
+                    let default_value = if self.peek_kind() == Some(&TokenKind::Equal) {
+                        self.advance(); // consume '='
+                        Some(Box::new(self.parse_expression(0)?))
+                    } else {
+                        None
+                    };
+                    params.push((param, default_value));
                 } else {
                     return Err("Expected identifier in function parameters".into());
                 }
@@ -103,6 +109,31 @@ impl<'a> Parser<'a> {
         self.consume(TokenKind::RParen, "Expected ')' after function parameters")?;
         let body = self.parse_block_or_single_statement()?;
         Ok(ASTNode::FunctionDeclaration(name, params, Box::new(body)))
+    }
+
+    fn parse_function_params(&mut self) -> Result<Vec<(String, Option<Box<ASTNode>>)>, String> {
+        let mut params = Vec::new();
+        if self.peek_kind() != Some(&TokenKind::RParen) {
+            loop {
+                if let Some(TokenKind::Identifier(param)) = self.peek_kind().cloned() {
+                    self.advance();
+                    let default_value = if self.peek_kind() == Some(&TokenKind::Equal) {
+                        self.advance(); // consume '='
+                        Some(Box::new(self.parse_expression(0)?))
+                    } else {
+                        None
+                    };
+                    params.push((param, default_value));
+                } else {
+                    return Err("Expected identifier in function parameters".into());
+                }
+                if self.peek_kind() == Some(&TokenKind::RParen) {
+                    break;
+                }
+                self.consume(TokenKind::Comma, "Expected ',' or ')' in function parameters")?;
+            }
+        }
+        Ok(params)
     }
 
     fn parse_variable_declaration(&mut self) -> Result<ASTNode, String> {
@@ -256,8 +287,18 @@ impl<'a> Parser<'a> {
                     let mut args = Vec::new();
                     if self.peek_kind() != Some(&TokenKind::RParen) {
                         loop {
+                            let mut arg_name = None;
+                            if let Some(&TokenKind::Identifier(ref name)) = self.peek_kind() {
+                                let next_token = self.tokens.get(self.current + 1).map(|t| &t.kind);
+                                if next_token == Some(&TokenKind::Equal) {
+                                    let name = name.clone();
+                                    self.advance(); // consume identifier
+                                    self.advance(); // consume equals
+                                    arg_name = Some(name);
+                                }
+                            }
                             let arg = self.parse_expression(0)?;
-                            args.push(Box::new(arg));
+                            args.push((arg_name, Box::new(arg)));
                             if self.peek_kind() == Some(&TokenKind::RParen) {
                                 break;
                             }
@@ -272,8 +313,6 @@ impl<'a> Parser<'a> {
             }
             TokenKind::LParen => {
                 let start_pos = self.current;
-
-                let mut params = Vec::new();
                 let mut is_param_list = true;
                 let mut temp_pos = self.current;
 
@@ -281,6 +320,16 @@ impl<'a> Parser<'a> {
                     loop {
                         if let Some(TokenKind::Identifier(_)) = self.tokens.get(temp_pos).map(|t| &t.kind) {
                             temp_pos += 1;
+                            if self.tokens.get(temp_pos).map(|t| &t.kind) == Some(&TokenKind::Equal) {
+                                temp_pos += 1;
+                                while temp_pos < self.tokens.len() {
+                                    let token = &self.tokens[temp_pos].kind;
+                                    if matches!(token, TokenKind::Comma | TokenKind::RParen) {
+                                        break;
+                                    }
+                                    temp_pos += 1;
+                                }
+                            }
                         } else {
                             is_param_list = false;
                             break;
@@ -302,20 +351,7 @@ impl<'a> Parser<'a> {
 
                 // check '->'
                 if is_param_list && self.tokens.get(temp_pos).map(|t| &t.kind) == Some(&TokenKind::ArrowFunc) {
-                    if self.peek_kind() != Some(&TokenKind::RParen) {
-                        loop {
-                            if let Some(TokenKind::Identifier(param)) = self.peek_kind().cloned() {
-                                params.push(param);
-                                self.advance();
-                            } else {
-                                return Err("Expected identifier in function parameters".into());
-                            }
-                            if self.peek_kind() == Some(&TokenKind::RParen) {
-                                break;
-                            }
-                            self.consume(TokenKind::Comma, "Expected ',' or ')' in function parameters")?;
-                        }
-                    }
+                    let params = self.parse_function_params()?;
                     self.consume(TokenKind::RParen, "Expected ')' after function parameters")?;
                     self.consume(TokenKind::ArrowFunc, "Expected '->' after function parameters")?;
                     let body = if self.peek_kind() == Some(&TokenKind::LBrace) {
@@ -381,8 +417,18 @@ impl<'a> Parser<'a> {
                     let mut args = Vec::new();
                     if self.peek_kind() != Some(&TokenKind::RParen) {
                         loop {
+                            let mut arg_name = None;
+                            let next_token = self.peek_kind().cloned();
+                            let next_next_token = self.tokens.get(self.current + 1).map(|t| &t.kind);
+                            if let Some(TokenKind::Identifier(name)) = next_token {
+                                if next_next_token == Some(&TokenKind::Equal) {
+                                    self.advance(); // consume identifier
+                                    self.advance(); // consume equals
+                                    arg_name = Some(name);
+                                }
+                            }
                             let arg = self.parse_expression(0)?;
-                            args.push(Box::new(arg));
+                            args.push((arg_name, Box::new(arg)));
                             if self.peek_kind() == Some(&TokenKind::RParen) {
                                 break;
                             }

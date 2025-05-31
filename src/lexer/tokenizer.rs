@@ -14,20 +14,22 @@ pub fn tokenize(input: &str) -> Vec<Token> {
             position += 1;
             continue;
         }
-        // "/* */" 
-        // "*/"
+
         if current_char == '/' && position + 1 < bytes.len() && bytes[position + 1] as char == '*' {
-            position += 2;
-            while position + 1 < bytes.len() && !(bytes[position] as char == '*' && bytes[position + 1] as char == '/') {
+            position += 2; // /*
+            
+            while position + 1 < bytes.len() {
+                let curr = bytes[position] as char;
+                let next = bytes[position + 1] as char;
+                
+                if curr == '*' && next == '/' {
+                    position += 2; // */
+                    break;
+                }
                 position += 1;
-            }
-            // "*/"
-            if position + 1 < bytes.len() {
-                position += 2;
             }
             continue;
         }
-        // --- End block ---
 
         if current_char.is_digit(10) {
             let start = position;
@@ -235,30 +237,6 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                     "null" => TokenKind::Null,
                     _ => TokenKind::Identifier(identifier.to_string()),
                 };
-                // };
-                // if identifier == "let" {
-                //     tokens.push(Token::new(TokenKind::Let, start));
-                // } else if identifier == "for" {
-                //     tokens.push(Token::new(TokenKind::For, start));
-                // } else if identifier == "while" {
-                //     tokens.push(Token::new(TokenKind::While, start));
-                // } else if identifier == "fn" {
-                //     tokens.push(Token::new(TokenKind::Fn, start));
-                // } else if identifier == "return" {
-                //     tokens.push(Token::new(TokenKind::Return, start));
-                // } else if identifier == "if" {
-                //     tokens.push(Token::new(TokenKind::If, start));
-                // } else if identifier == "true" {
-                //     tokens.push(Token::new(TokenKind::Boolean(true), start));
-                // } else if identifier == "false" {
-                //     tokens.push(Token::new(TokenKind::Boolean(false), start));
-                // } else if identifier == "break" {
-                //     tokens.push(Token::new(TokenKind::Break, start));
-                // } else if identifier == "continue" {
-                //     tokens.push(Token::new(TokenKind::Continue, start));
-                // } else {
-                //     tokens.push(Token::new(TokenKind::Identifier(identifier.to_string()), start));
-                // }
                 tokens.push(Token::new(kind, start));
                 continue;
             }

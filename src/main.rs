@@ -11,23 +11,6 @@ use std::fs;
 use repl::repl::repl;
 
 fn main() {
-    // Example usage of the lexer
-    // let input = "let x = 5 + 5; let y = x * 2;";
-    // let tokens = lexer::tokenizer::tokenize(input);
-    // for token in &tokens {
-    //     println!("{:#?}", token);
-    // }
-
-    // // Example usage of the parser
-    // let mut ast = parser::parser::Parser::new(&tokens);
-    // let ast = ast.parse().unwrap();
-    // println!("{:#?}", ast);
-
-    // // Example usage of the evaluator
-    // let mut evaluator = evaluator::evaluator::Evaluator::new(&tokens);
-    // let result = evaluator.evaluate().unwrap();
-    // println!("Result: {:?}", result);
-
     let args = get_args();
 
     if args.len() < 2 {
@@ -38,13 +21,32 @@ fn main() {
     let contents = fs::read_to_string(filename).expect("Something went wrong reading the file");
 
     let tokens = lexer::tokenizer::tokenize(&contents);
-    for token in &tokens {
-        println!("{:#?}", token);
+    let mut parser = parser::parser::Parser::new(&tokens);
+    
+    match parser.parse() {
+        Ok(_) => {
+            let mut evaluator = evaluator::evaluator::Evaluator::new(&tokens);
+            match evaluator.evaluate() {
+                Ok(_) => (),
+                Err(e) => {
+                    println!("Runtime error: {}", e);
+                    std::process::exit(1);
+                }
+            }
+        },
+        Err(e) => {
+            println!("Parser error: {}", e);
+            if let Some(token) = tokens.get(parser.current.saturating_sub(1)) {
+                let line_number = contents[..token.position].matches('\n').count() + 1;
+                let line_start = contents[..token.position].rfind('\n').map_or(0, |i| i + 1);
+                let column = token.position - line_start + 1;
+                
+                println!("Error occurred at line {}:{}", line_number, column);
+                let line = contents.lines().nth(line_number - 1).unwrap_or("");
+                println!("  | {}", line);
+                println!("  | {}^", " ".repeat(column - 1));
+            }
+            std::process::exit(1);
+        }
     }
-    let mut ast = parser::parser::Parser::new(&tokens);
-    let ast = ast.parse().unwrap();
-    println!("{:#?}", ast);
-
-    let mut evaluator = evaluator::evaluator::Evaluator::new(&tokens);
-    evaluator.evaluate().unwrap();
 }
