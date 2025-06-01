@@ -79,6 +79,20 @@ fn number_and_float_to_string(v: &Value, _: Vec<Value>) -> Result<Value, String>
     }
 }
 
+fn number_to_float(v: &Value, _: Vec<Value>) -> Result<Value, String> {
+    match v {
+        Value::Number(n) => Ok(Value::Float(*n as f64)),
+        _ => Err("Not a number".into()),
+    }
+}
+
+fn float_to_number(v: &Value, _: Vec<Value>) -> Result<Value, String> {
+    match v {
+        Value::Float(f) => Ok(Value::Number(*f as i64)),
+        _ => Err("Not a float".into()),
+    }
+}
+
 // ------------------------------------------------------
 
 fn array_len(v: &Value, _: Vec<Value>) -> Result<Value, String> {
@@ -167,7 +181,7 @@ fn array_map(v: &Value, args: Vec<Value>) -> Result<Value, String> {
                     let d: Vec<Token> = Vec::new();
             
                     let mut evaluator = Evaluator {
-                        parser: crate::parser::parser::Parser::new(&d),
+                        parser: crate::parser::parser::Parser::new(d),
                         env_stack: func_env,
                     };
                     match evaluator.eval(body) {
@@ -243,12 +257,14 @@ pub fn string_methods() -> HashMap<&'static str, MethodFn> {
 pub fn number_methods() -> HashMap<&'static str, MethodFn> {
     let mut map = HashMap::new();
     map.insert("to_string", number_and_float_to_string as MethodFn);
+    map.insert("to_float", number_to_float as MethodFn);
     map
 }
 
 pub fn float_methods() -> HashMap<&'static str, MethodFn> {
     let mut map = HashMap::new();
     map.insert("to_string", number_and_float_to_string as MethodFn);
+    map.insert("to_int", float_to_number as MethodFn);
     map
 }
 
@@ -269,6 +285,52 @@ pub fn hashmap_methods() -> HashMap<&'static str, MethodFn> {
     map.insert("get", hashmap_get as MethodFn);
     map.insert("set", hashmap_set as MethodFn);
     map
+}
+
+// Xoshiro256** PRNG implementation
+struct Xoshiro256StarStar {
+    s: [u64; 4]
+}
+
+impl Xoshiro256StarStar {
+    fn new(seed: u64) -> Self {
+        let mut state = [0u64; 4];
+        let mut splitmix = seed;
+        
+        for i in 0..4 {
+            splitmix = splitmix.wrapping_add(0x9e3779b97f4a7c15);
+            let mut z = splitmix;
+            z = (z ^ (z >> 30)).wrapping_mul(0xbf58476d1ce4e5b9);
+            z = (z ^ (z >> 27)).wrapping_mul(0x94d049bb133111eb);
+            state[i] = z ^ (z >> 31);
+        }
+        
+        Self { s: state }
+    }
+
+    fn next(&mut self) -> u64 {
+        let result = self.s[1].wrapping_mul(5).rotate_left(7).wrapping_mul(9);
+        let t = self.s[1] << 17;
+        
+        self.s[2] ^= self.s[0];
+        self.s[3] ^= self.s[1];
+        self.s[1] ^= self.s[2];
+        self.s[0] ^= self.s[3];
+        
+        self.s[2] ^= t;
+        self.s[3] = self.s[3].rotate_left(45);
+        
+        result
+    }
+    
+    fn next_f64(&mut self) -> f64 {
+        (self.next() >> 11) as f64 / (1u64 << 53) as f64
+    }
+    
+    fn next_range(&mut self, min: i64, max: i64) -> i64 {
+        let range = (max - min + 1) as u64;
+        min + (self.next() % range) as i64
+    }
 }
 
 pub fn default_env() -> HashMap<String, (Value, bool)> {
@@ -320,6 +382,104 @@ pub fn default_env() -> HashMap<String, (Value, bool)> {
     }));
 
     env.insert("Time".to_string(), (Value::Module(time), true));
+
+    let mut random = HashMap::new();
+
+    random.insert("int".to_string(), Value::BuiltInFunction(|args| {
+        let seed = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos() as u64;
+        
+        let min = match args.get(0) {
+            Some(Value::Number(n)) => *n,
+            _ => 0,
+        };
+        
+        let max = match args.get(1) {
+            Some(Value::Number(n)) => *n,
+            _ => 100,
+        };
+
+        if min > max {
+            return Value::Number(min);
+        }
+
+        let mut rng = Xoshiro256StarStar::new(seed);
+        Value::Number(rng.next_range(min, max))
+    }));
+
+    random.insert("float".to_string(), Value::BuiltInFunction(|_args| {
+        let seed = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos() as u64;
+        
+        let mut rng = Xoshiro256StarStar::new(seed);
+        Value::Float(rng.next_f64())
+    }));
+
+    random.insert("bool".to_string(), Value::BuiltInFunction(|args| {
+        let probability = match args.get(0) {
+            Some(Value::Float(f)) => *f,
+            Some(Value::Number(n)) => *n as f64,
+            _ => 0.5,
+        };
+
+        let seed = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos() as u64;
+        
+        let mut rng = Xoshiro256StarStar::new(seed);
+        Value::Bool(rng.next_f64() < probability)
+    }));
+
+    random.insert("choice".to_string(), Value::BuiltInFunction(|args| {
+        if let Some(Value::Array(arr)) = args.get(0) {
+            if arr.is_empty() {
+                return Value::Null;
+            }
+
+            let seed = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos() as u64;
+            
+            let mut rng = Xoshiro256StarStar::new(seed);
+            let idx = (rng.next() as usize) % arr.len();
+            arr[idx].clone()
+        } else {
+            Value::Null
+        }
+    }));
+
+    random.insert("shuffle".to_string(), Value::BuiltInFunction(|args| {
+        if let Some(Value::Array(arr)) = args.get(0) {
+            if arr.is_empty() {
+                return Value::Array(vec![]);
+            }
+
+            let mut new_arr = arr.clone();
+            let seed = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos() as u64;
+            
+            let mut rng = Xoshiro256StarStar::new(seed);
+
+            for i in (1..new_arr.len()).rev() {
+                let j = (rng.next() as usize) % (i + 1);
+                new_arr.swap(i, j);
+            }
+
+            Value::Array(new_arr)
+        } else {
+            Value::Array(vec![])
+        }
+    }));
+
+    env.insert("Random".to_string(), (Value::Module(random), true));
 
     // -----------------------------------------------------
     // -------------------- GENERAL ------------------------

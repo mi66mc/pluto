@@ -34,22 +34,33 @@ pub fn tokenize(input: &str) -> Vec<Token> {
         if current_char.is_digit(10) {
             let start = position;
             let mut has_dot = false;
+            let mut dot_position = 0;
+            
             while position < bytes.len() && ((bytes[position] as char).is_digit(10) || (bytes[position] as char) == '.') {
                 if (bytes[position] as char) == '.' {
                     if has_dot {
                         break;
                     }
                     has_dot = true;
+                    dot_position = position;
                 }
                 position += 1;
             }
-            let number_str = &input[start..position];
-            if has_dot {
+
+            if has_dot && dot_position + 1 < position {
+                let number_str = &input[start..position];
                 let number: f64 = number_str.parse().unwrap();
                 tokens.push(Token::new(TokenKind::Float(number), start));
             } else {
+                let end = if has_dot { dot_position } else { position };
+                let number_str = &input[start..end];
                 let number: i64 = number_str.parse().unwrap();
                 tokens.push(Token::new(TokenKind::Number(number), start));
+                
+                if has_dot {
+                    position = dot_position + 1;
+                    tokens.push(Token::new(TokenKind::Dot, dot_position));
+                }
             }
             continue;
         }

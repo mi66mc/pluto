@@ -112,13 +112,13 @@ impl fmt::Display for Value {
     }
 }
 
-pub struct Evaluator<'a> {
-    pub parser: Parser<'a>,
+pub struct Evaluator {
+    pub parser: Parser,
     pub env_stack: Vec<HashMap<String, (Value, bool)>>,
 }
 
-impl<'a> Evaluator<'a> {
-    pub fn new(tokens: &'a Vec<Token>) -> Self {
+impl Evaluator {
+    pub fn new(tokens: Vec<Token>) -> Self {
         Evaluator {
             parser: Parser::new(tokens),
             env_stack: vec![default_env()], // default
@@ -332,7 +332,6 @@ impl<'a> Evaluator<'a> {
 
                             let mut used_params = vec![false; params.len()];
                             
-                            // Process named arguments
                             for (arg_name, value) in evaluated_args.iter() {
                                 if let Some(name) = arg_name {
                                     if let Some(pos) = params.iter().position(|p| &p.0 == name) {
@@ -347,7 +346,6 @@ impl<'a> Evaluator<'a> {
                                 }
                             }
 
-                            // Process positional arguments
                             let mut pos = 0;
                             for (arg_name, value) in evaluated_args.iter() {
                                 if arg_name.is_none() {
@@ -363,7 +361,6 @@ impl<'a> Evaluator<'a> {
                                 }
                             }
 
-                            // Handle default values for unused parameters
                             for (i, (param_name, default_value)) in params.iter().enumerate() {
                                 if !used_params[i] {
                                     if let Some(default_expr) = default_value {
@@ -383,7 +380,7 @@ impl<'a> Evaluator<'a> {
                             new_env.push(local_env);
                             let dummy_tokens = Vec::new();
                             let mut evaluator = Evaluator {
-                                parser: Parser::new(&dummy_tokens),
+                                parser: Parser::new(dummy_tokens),
                                 env_stack: new_env,
                             };
                             let result = evaluator.eval(&body)?;
@@ -938,6 +935,10 @@ impl<'a> Evaluator<'a> {
                 "==" => Ok(Value::Bool(a == b)),
                 "!=" => Ok(Value::Bool(a != b)),
                 _ => Err(format!("Unknown boolean operator: {}", op)),
+            },
+            (Value::Array(a), Value::Array(b)) => match op {
+                "+" => Ok(Value::Array(a.into_iter().chain(b.into_iter()).collect())),
+                _ => Err(format!("Unknown array operator: {}", op)),
             },
             _ => Err("Type error: incompatible types for binary operation".to_string()),
         }

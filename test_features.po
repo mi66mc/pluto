@@ -1,49 +1,45 @@
 /* ==========================================
-   Basic Variable Declaration and Types
+   Variables and Types
    ========================================== */
-print("Testing Variables and Types:");
+print("\nTesting Variables and Types:");
 
-let a = 42;
-let b = 3.14;
-let s = "Hello";
+let num = 42;
+let float = 3.14;
+let str = "Hello";
 let bool = true;
-let n = null;
+let null_val = null;
 
-print("Type of a:", type(a));    /* Number */
-print("Type of b:", type(b));    /* Float */
-print("Type of s:", type(s));    /* String */
-print("Type of bool:", type(bool)); /* Bool */
-print("Type of n:", type(n));    /* Null */
+print("Type of num:", type(num));
+print("Type of float:", type(float));
+print("Type of str:", type(str));
+print("Type of bool:", type(bool));
+print("Type of null:", type(null_val));
 
 /* ==========================================
    Arithmetic Operations
    ========================================== */
 print("\nTesting Arithmetic:");
 
-print("42 + 8 =", 42 + 8);      /* 50 */
-print("42 - 8 =", 42 - 8);      /* 34 */
-print("42 * 8 =", 42 * 8);      /* 336 */
-print("42 / 8 =", 42 / 8);      /* 5.25 */
-print("42 % 8 =", 42 % 8);      /* 2 */
-
-/* Mixed number and float operations */
-print("42 + 3.14 =", 42 + 3.14);
+print(num, "+", 8, "=", num + 8);
+print(num, "-", 8, "=", num - 8);
+print(num, "*", 8, "=", num * 8);
+print(num, "/", 8, "=", num / 8);
+print(num, "%", 8, "=", num % 8);
+print(num, "+", float, "=", num + float);
 
 /* ==========================================
    String Operations
    ========================================== */
 print("\nTesting Strings:");
-
-let str = "Hello";
 print("String methods:");
 print("Length:", str.len());
 print("Uppercase:", str.to_upper());
 print("Lowercase:", str.to_lower());
 print("Character at 1:", str.char_at(1));
-print("String + Number:", "Answer: " + 42);
+print("String + Number:", "Answer: " + num.to_string());
 
 /* ==========================================
-   Arrays
+   Array Operations (Immutable)
    ========================================== */
 print("\nTesting Arrays:");
 
@@ -52,21 +48,26 @@ print("Original array:", arr);
 print("Length:", arr.len());
 print("Sum:", arr.sum());
 
-/* Array methods */
-arr.push(6);
-print("After push:", arr);
-arr.pop();
-print("After pop:", arr);
-arr.remove(0);
-print("After remove(0):", arr);
+/* Test array immutability */
+let arr_push = arr.push(6);
+print("Original array after push:", arr);
+print("New array from push:", arr_push);
 
-/* Array map */
+let arr_pop = arr.pop();
+print("Original array after pop:", arr);
+print("New array from pop:", arr_pop);
+
+let arr_remove = arr.remove(2);
+print("Original array after remove:", arr);
+print("New array from remove:", arr_remove);
+
+/* Test array map */
 let doubled = arr.map((x) -> x * 2);
-print("Doubled:", doubled);
+print("Original array after map:", arr);
+print("New array from map (doubled):", doubled);
 
-/* Array with default param map */
-let squared = arr.map((x=0) -> x * x);
-print("Squared:", squared);
+let squared = arr.map((x) -> x * x);
+print("New array from map (squared):", squared);
 
 /* ==========================================
    HashMaps
@@ -77,6 +78,7 @@ let map = {"name": "John", "age": 30};
 print("Original map:", map);
 print("Length:", map.len());
 print("Get name:", map.get("name"));
+
 let new_map = map.set("city", "New York");
 print("After set:", new_map);
 
@@ -85,9 +87,9 @@ print("After set:", new_map);
    ========================================== */
 print("\nTesting Functions:");
 
-fn greet(name="World", greeting="Hello") {
+let greet = (name="World", greeting="Hello") -> {
     print(greeting + ", " + name + "!");
-}
+};
 
 greet();                    /* Hello, World! */
 greet("Alice");            /* Hello, Alice! */
@@ -95,10 +97,10 @@ greet("Bob", "Hi");        /* Hi, Bob! */
 greet(greeting="Hola");    /* Hola, World! */
 greet(name="Charlie", greeting="Hey"); /* Hey, Charlie! */
 
-/* Function returning value */
-fn power(x, n=2) {
+/* Function with named parameters */
+let power = (x, n=2) -> {
     return Math.pow(x, n);
-}
+};
 
 print("2^3 =", power(2, 3));    /* 8 */
 print("3^2 =", power(3));       /* 9 (using default) */
@@ -110,10 +112,10 @@ print("4^2 =", power(x=4));     /* 16 (using named arg) */
 print("\nTesting Control Flow:");
 
 /* If-else */
-let num = 42;
-if (num > 50) {
+let test_num = 42;
+if (test_num > 50) {
     print("Greater than 50");
-} else if (num > 40) {
+} else if (test_num > 40) {
     print("Greater than 40");
 } else {
     print("Less than or equal to 40");
@@ -152,17 +154,34 @@ print("2^3 =", Math.pow(2, 3));
 print("Current time (s):", Time.now());
 print("Current time (ms):", Time.now_ms());
 
-/* ==========================================
-   Input/Output
-   ========================================== */
-print("\nTesting I/O:");
-print("Regular print");
-print("Print with no newline", end="");
-print(" (continued)");
+/* Random module */
+print("\nTesting Random Module:");
+print("Random int (1-100):", Random.int(1, 100));
+print("Random float:", Random.float());
+print("Random bool (50%):", Random.bool(0.5));
 
-/* Uncomment to test input:
-let user_input = input("Enter something: ");
-print("You entered:", user_input);
-*/
+let test_arr = [1, 2, 3, 4, 5];
+print("Original array:", test_arr);
+let shuffled = Random.shuffle(test_arr);
+print("Shuffled array:", shuffled);
+
+/* ==========================================
+   Monte Carlo Pi Estimation
+   ========================================== */
+print("\nEstimating Pi:");
+
+let points = 10000;
+let inside = 0;
+
+for (let i = 0; i < points; i++) {
+    let x = Random.float();
+    let y = Random.float();
+    if (x * x + y * y <= 1.0) {
+        inside++;
+    }
+}
+
+let pi = 4.0 * inside / points;
+print("Estimated Pi:", pi);
 
 print("\nAll tests completed!"); 
