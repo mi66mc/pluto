@@ -230,6 +230,7 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                     "fn" => TokenKind::Fn,
                     "return" => TokenKind::Return,
                     "if" => TokenKind::If,
+                    "else" => TokenKind::Else,
                     "true" => TokenKind::Boolean(true),
                     "false" => TokenKind::Boolean(false),
                     "break" => TokenKind::Break,

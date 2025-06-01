@@ -177,11 +177,16 @@ impl<'a> Parser<'a> {
     fn parse_if_statement(&mut self) -> Result<ASTNode, String> {
         let condition = self.parse_expression(0)?;
         let then_branch = self.parse_block_or_single_statement()?;
-        let else_branch = if self.match_kind(TokenKind::Identifier("else".to_string())) {
-            Some(Box::new(self.parse_block_or_single_statement()?))
-        } else {
-            None
-        };
+        
+        let mut else_branch = None;
+        if self.match_kind(TokenKind::Else) {
+            if self.match_kind(TokenKind::If) {
+                else_branch = Some(Box::new(self.parse_if_statement()?));
+            } else {
+                else_branch = Some(Box::new(self.parse_block_or_single_statement()?));
+            }
+        }
+        
         Ok(ASTNode::IfStatement(Box::new(condition), Box::new(then_branch), else_branch))
     }
 

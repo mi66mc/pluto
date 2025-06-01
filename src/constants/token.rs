@@ -46,6 +46,7 @@ pub enum TokenKind {
     Continue,
     Return,
     If,
+    Else,
     EOF,
     Unknown(char),
     Colon,
@@ -58,6 +59,7 @@ pub trait TokenKindTrait {
 impl TokenKindTrait for TokenKind {
     fn to_string(&self) -> String {
         match self {
+            TokenKind::Else => "else".to_string(),
             TokenKind::Const => "const".to_string(),
             TokenKind::Null => "null".to_string(),
             TokenKind::ArrowFunc => "->".to_string(),

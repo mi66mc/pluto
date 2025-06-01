@@ -31,7 +31,6 @@ pub enum Value {
     Array(Vec<Value>),
     HashMapV(HashMap<String, Value>),
     Null
-    // add more
 }
 
 pub trait PlutoMethod {
