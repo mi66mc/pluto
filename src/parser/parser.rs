@@ -1,27 +1,43 @@
 use crate::constants::token::{Token, TokenKind, TokenKindTrait};
 use crate::parser::ast::ASTNode;
+use crate::utils::colors::{YELLOW, RED, RESET, BOLD, GREY};
 
 pub struct Parser {
     tokens: Vec<Token>,
     pub current: usize,
+    source: String,
 }
 
 impl Parser {
-    pub fn new(tokens: Vec<Token>) -> Self {
-        Parser { tokens, current: 0 }
+    pub fn new(tokens: Vec<Token>, source: String) -> Self {
+        Parser { 
+            tokens, 
+            current: 0,
+            source,
+        }
+    }
+
+    pub fn format_error(&self, msg: &str) -> String {
+        let mut error = format!("{}{}Error:{} {}", BOLD, RED, RESET, msg);
+        if let Some(token) = self.tokens.get(self.current.saturating_sub(1)) {
+            let line_number = self.source[..token.position].matches('\n').count() + 1;
+            let line_start = self.source[..token.position].rfind('\n').map_or(0, |i| i + 1);
+            let column = token.position - line_start + 1;
+            
+            error.push_str(&format!("\n{}At line -> {}{}:{}{}{}\n\n", BOLD, GREY, line_number, GREY, column, RESET));
+            if let Some(line) = self.source.lines().nth(line_number - 1) {
+                error.push_str(&format!("{}{}{:>4}{} {}{}{} {}{}\n", BOLD, GREY, line_number, RESET, YELLOW, "|", RESET, line, RESET));
+                error.push_str(&format!("     {}{}{} {}{}{}\n{}", YELLOW, "|", RESET, " ".repeat(column - 1), RED, "^", RESET));
+            }
+        }
+        error
     }
 
     pub fn parse(&mut self) -> Result<ASTNode, String> {
-        let mut statements = Vec::new();
-
-        while self.current < self.tokens.len()
-            && self.tokens[self.current].kind != TokenKind::EOF
-        {
-            let stmt = self.parse_statement()?;
-            statements.push(stmt);
+        match self.parse_program() {
+            Ok(ast) => Ok(ast),
+            Err(msg) => Err(self.format_error(&msg))
         }
-
-        Ok(ASTNode::Program(statements))
     }
 
     // -----------------------------------------------------
@@ -524,5 +540,14 @@ impl Parser {
 
         let body = self.parse_block_or_single_statement()?;
         Ok(ASTNode::ForStatement(initializer, condition, increment, Box::new(body)))
+    }
+
+    fn parse_program(&mut self) -> Result<ASTNode, String> {
+        let mut statements = Vec::new();
+        while self.current < self.tokens.len() && self.tokens[self.current].kind != TokenKind::EOF {
+            let stmt = self.parse_statement()?;
+            statements.push(stmt);
+        }
+        Ok(ASTNode::Program(statements))
     }
 }

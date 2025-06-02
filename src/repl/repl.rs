@@ -1,7 +1,7 @@
 use crate::lexer::tokenizer::tokenize;
 use crate::parser::parser::Parser;
 use crate::evaluator::evaluator::Evaluator;
-use crate::utils::colors::{self, blue, green, red, yellow, bold};
+use crate::utils::colors::{self, blue, green, red, bold};
 use std::io::{self, Write};
 
 const HELP_TEXT: &str = r#"
@@ -18,17 +18,6 @@ fn print_welcome_message() {
     println!("Type {} to quit\n", green(":exit"));
 }
 
-fn print_error(msg: &str, input: &str, position: Option<usize>) {
-    println!("{}", colors::error(msg));
-    
-    if let Some(pos) = position {
-        let line = input.lines().next().unwrap_or("");
-        println!("  {}", yellow("|"));
-        println!("  {} {}", yellow("|"), line);
-        println!("  {} {}", yellow("|"), red(&format!("{}^", " ".repeat(pos))));
-    }
-}
-
 enum Command {
     Help,
     Clear,
@@ -38,7 +27,6 @@ enum Command {
 }
 
 fn parse_command(cmd: &str) -> Command {
-    let cmd = cmd.trim();
     match cmd {
         ":help" | ":h" => Command::Help,
         ":clear" | ":c" => Command::Clear,
@@ -64,8 +52,7 @@ fn handle_special_command(cmd: &str, env: &mut Evaluator) -> bool {
             std::process::exit(0);
         }
         Command::Reset => {
-            let tokens = Vec::new();
-            *env = Evaluator::new(tokens);
+            *env = Evaluator::new();
             println!("{}", green("Environment reset."));
             true
         }
@@ -73,11 +60,28 @@ fn handle_special_command(cmd: &str, env: &mut Evaluator) -> bool {
     }
 }
 
+fn evaluate_input(input: &str, env: &mut Evaluator) {
+    let tokens = tokenize(input);
+    let mut parser = Parser::new(tokens, input.to_string());
+    
+    match parser.parse() {
+        Ok(ast) => match env.evaluate_ast(ast) {
+            Ok(val) => {
+                let s = val.to_string();
+                if !s.is_empty() {
+                    println!("{}", blue(&s));
+                }
+            }
+            Err(e) => println!("{}", colors::error(&e)),
+        },
+        Err(e) => println!("{}", e),
+    }
+}
+
 pub fn repl() {
     print_welcome_message();
 
-    let base_tokens = Vec::new();
-    let mut env = Evaluator::new(base_tokens);
+    let mut env = Evaluator::new();
     let mut input_buffer = String::new();
     let mut brace_count = 0;
     let mut paren_count = 0;
@@ -95,7 +99,8 @@ pub fn repl() {
         let mut line = String::new();
         match io::stdin().read_line(&mut line) {
             Ok(_) => {
-                let line_trimmed = line.trim_end().to_string();
+                let line_trimmed = line.trim_end();
+                
                 if line_trimmed.is_empty() && !input_buffer.is_empty() {
                     let input = input_buffer.clone();
                     input_buffer.clear();
@@ -103,24 +108,10 @@ pub fn repl() {
                     paren_count = 0;
                     
                     if !handle_special_command(&input, &mut env) {
-                        let tokens = tokenize(&input);
-                        let mut parser = Parser::new(tokens);
-                        
-                        match parser.parse() {
-                            Ok(ast) => match env.evaluate_ast(ast) {
-                                Ok(val) => {
-                                    let s = val.to_string();
-                                    if s != "0" && !s.is_empty() {
-                                        println!("{}", blue(&s));
-                                    }
-                                }
-                                Err(e) => print_error(&e, &input, None),
-                            },
-                            Err(e) => print_error(&e, &input, Some(parser.current)),
-                        }
+                        evaluate_input(&input, &mut env);
                     }
                 } else if line_trimmed.starts_with(':') {
-                    if !handle_special_command(&line_trimmed, &mut env) {
+                    if !handle_special_command(line_trimmed, &mut env) {
                         println!("{}", red("Unknown command. Type :help for available commands."));
                     }
                 } else {
@@ -137,28 +128,14 @@ pub fn repl() {
                     if !input_buffer.is_empty() {
                         input_buffer.push('\n');
                     }
-                    input_buffer.push_str(&line_trimmed);
+                    input_buffer.push_str(line_trimmed);
 
                     if brace_count == 0 && paren_count == 0 && !line_trimmed.ends_with('\\') {
                         let input = input_buffer.clone();
                         input_buffer.clear();
                         
                         if !handle_special_command(&input, &mut env) {
-                            let tokens = tokenize(&input);
-                            let mut parser = Parser::new(tokens);
-                            
-                            match parser.parse() {
-                                Ok(ast) => match env.evaluate_ast(ast) {
-                                    Ok(val) => {
-                                        let s = val.to_string();
-                                        if s != "0" && !s.is_empty() {
-                                            println!("{}", blue(&s));
-                                        }
-                                    }
-                                    Err(e) => print_error(&e, &input, None),
-                                },
-                                Err(e) => print_error(&e, &input, Some(parser.current)),
-                            }
+                            evaluate_input(&input, &mut env);
                         }
                     }
                 }

@@ -2,9 +2,7 @@ use std::collections::HashMap;
 use std::fmt;
 
 use crate::builtins::builtins::{default_env, float_methods, number_methods, string_methods, array_methods, hashmap_methods};
-use crate::constants::token::Token;
 use crate::parser::ast::{ASTNode, ASTNodeTrait};
-use crate::parser::parser::Parser;
 
 #[allow(dead_code)]
 #[derive(Clone, Debug)]
@@ -113,14 +111,12 @@ impl fmt::Display for Value {
 }
 
 pub struct Evaluator {
-    pub parser: Parser,
     pub env_stack: Vec<HashMap<String, (Value, bool)>>,
 }
 
 impl Evaluator {
-    pub fn new(tokens: Vec<Token>) -> Self {
+    pub fn new() -> Self {
         Evaluator {
-            parser: Parser::new(tokens),
             env_stack: vec![default_env()], // default
         }
     }
@@ -128,10 +124,6 @@ impl Evaluator {
     fn current_env_mut(&mut self) -> &mut HashMap<String, (Value, bool)> {
         self.env_stack.last_mut().unwrap()
     }
-
-    // fn current_env(&self) -> &HashMap<String, Value> {
-    //     self.env_stack.last().unwrap()
-    // }
 
     fn lookup(&self, name: &str) -> Option<Value> {
         for env in self.env_stack.iter().rev() {
@@ -142,9 +134,8 @@ impl Evaluator {
         None
     }
 
-    pub fn evaluate(&mut self) -> Result<Value, String> {
-        let ast = self.parser.parse()?;
-        match self.eval(&ast)? {
+    pub fn evaluate(&mut self, ast: &ASTNode) -> Result<Value, String> {
+        match self.eval(ast)? {
             EvalResult::Value(val) => Ok(val),
             EvalResult::Return(_) => Err("Unexpected 'return' outside of function".to_string()),
             EvalResult::Break => Err("Unexpected 'break' outside of loop".to_string()),
@@ -152,7 +143,7 @@ impl Evaluator {
         }
     }
 
-    pub fn evaluate_ast(&mut self, ast: crate::parser::ast::ASTNode) -> Result<Value, String> {
+    pub fn evaluate_ast(&mut self, ast: ASTNode) -> Result<Value, String> {
         match self.eval(&ast)? {
             EvalResult::Value(val) => Ok(val),
             EvalResult::Return(val) => Ok(val),
@@ -378,9 +369,7 @@ impl Evaluator {
                             }
 
                             new_env.push(local_env);
-                            let dummy_tokens = Vec::new();
                             let mut evaluator = Evaluator {
-                                parser: Parser::new(dummy_tokens),
                                 env_stack: new_env,
                             };
                             let result = evaluator.eval(&body)?;

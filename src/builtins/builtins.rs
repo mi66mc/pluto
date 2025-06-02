@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use crate::constants::token::Token;
 use crate::{evaluator::evaluator::Value};
 use std::io::Write;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -178,10 +177,8 @@ fn array_map(v: &Value, args: Vec<Value>) -> Result<Value, String> {
                     let mut frame = HashMap::<String, (Value, bool)>::new();
                     frame.insert(params[0].0.clone(), (item.clone(), false));
                     func_env.push(frame);
-                    let d: Vec<Token> = Vec::new();
             
                     let mut evaluator = Evaluator {
-                        parser: crate::parser::parser::Parser::new(d),
                         env_stack: func_env,
                     };
                     match evaluator.eval(body) {
