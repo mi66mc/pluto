@@ -358,6 +358,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 | Function | Parameters | Returns | Description |
 |----------|------------|---------|-------------|
 | `print(...args, end="\n")` | Any..., String | null | Prints arguments with space separator. Optional 'end' parameter specifies ending (default "\n") |
+| `print_raw(...args, end="\n")` | Any..., String | null | Prints arguments with space separator. Optional 'end' parameter specifies ending (default "\n") |
 | `type(value)` | Any | String | Returns type name of value |
 | `input(prompt?)` | String? | String | Reads line from stdin with optional prompt |
 | `exit(code?)` | Number? | never | Exits program with optional code (default 0) |

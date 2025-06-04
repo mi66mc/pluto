@@ -542,6 +542,44 @@ pub fn default_env() -> HashMap<String, (Value, bool)> {
     );
 
     env.insert(
+        "print_raw".to_string(),
+        (
+            Value::BuiltInFunction(|args| {
+                let mut end = "\n";
+                let mut values = Vec::new();
+                
+                let mut i = 0;
+                while i < args.len() {
+                    if i + 1 < args.len() {
+                        if let Value::String(s) = &args[i] {
+                            if s == "end" {
+                                if let Value::String(e) = &args[i + 1] {
+                                    end = e;
+                                    i += 2;
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+                    values.push(&args[i]);
+                    i += 1;
+                }
+
+                for (i, value) in values.iter().enumerate() {
+                    if i > 0 {
+                        print!(" ");
+                    }
+                    print!("{:?}", value);
+                }
+                print!("{}", end);
+                let _ = std::io::stdout().flush();
+                Value::Null
+            }),
+            true,
+        ),
+    );
+
+    env.insert(
         "type".to_string(),
         (
             Value::BuiltInFunction(|args| {
