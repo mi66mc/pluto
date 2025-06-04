@@ -343,16 +343,37 @@ pub fn default_env() -> HashMap<String, (Value, bool)> {
 
     math.insert("pow".to_string(), Value::BuiltInFunction(|args| {
         let a = match args.get(0) {
-            Some(Value::Float(f)) => *f,
-            Some(Value::Number(n)) => *n as f64,
-            _ => return Value::Float(0.0),
+            Some(Value::Float(f)) => Value::Float(*f),
+            Some(Value::Number(n)) => Value::Number(*n),
+            _ => return Value::Number(0),
         };
         let b = match args.get(1) {
-            Some(Value::Float(f)) => *f,
-            Some(Value::Number(n)) => *n as f64,
-            _ => return Value::Float(0.0),
+            Some(Value::Float(f)) => Value::Float(*f),
+            Some(Value::Number(n)) => Value::Number(*n),
+            _ => return Value::Number(0),
         };
-        return Value::Float(a.powf(b))
+        match (a, b) {
+            (Value::Float(x), Value::Float(y)) => Value::Float(x.powf(y)),
+            (Value::Float(x), Value::Number(y)) => Value::Float(x.powf(y as f64)),
+            (Value::Number(x), Value::Float(y)) => Value::Float((x as f64).powf(y)),
+            (Value::Number(x), Value::Number(y)) => {
+                if y >= 0 {
+                    Value::Number(x.pow(y as u32))
+                } else {
+                    Value::Float((x as f64).powf(y as f64))
+                }
+            },
+            _ => Value::Number(0),
+        }
+    }));
+
+    math.insert("sqrt".to_string(), Value::BuiltInFunction(|args| {
+        let a = match args.get(0) {
+            Some(Value::Float(f)) => Value::Float(f.sqrt()),
+            Some(Value::Number(n)) => Value::Number((*n as f64).sqrt() as i64),
+            _ => return Value::Number(0),
+        };
+        a
     }));
 
     env.insert("Math".to_string(), (Value::Module(math), true));
