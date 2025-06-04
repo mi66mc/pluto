@@ -380,6 +380,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 | `>=` | Number/Float | Greater than or equal |
 | `++` | Number/Float | Postfix increment |
 | `--` | Number/Float | Postfix decrement |
+| `&&` | Boolean | Logical AND |
+| `||` | Boolean | Logical OR |
+| `!` | Boolean | Logical NOT |
 
 ### Control Flow
 ```pluto
