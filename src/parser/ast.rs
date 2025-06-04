@@ -19,6 +19,7 @@ pub enum ASTNode {
     FunctionDeclaration(String, Vec<(String, Option<Box<ASTNode>>)>, Box<ASTNode>),
     AnonymousFunction(Vec<(String, Option<Box<ASTNode>>)>, Box<ASTNode>),
     FunctionCall(String, Vec<(Option<String>, Box<ASTNode>)>),
+    ImmediateInvocation(Box<ASTNode>, Vec<(Option<String>, Box<ASTNode>)>),
     IfStatement(Box<ASTNode>, Box<ASTNode>, Option<Box<ASTNode>>),
     WhileStatement(Box<ASTNode>, Box<ASTNode>),
     ReturnStatement(Option<Box<ASTNode>>),
@@ -158,6 +159,10 @@ impl ASTNodeTrait for ASTNode {
                     String::new()
                 };
                 format!("for {}{}{}{}", init_str, cond_str, inc_str, body.to_string())
+            }
+            ASTNode::ImmediateInvocation(func, args) => {
+                let args_str: Vec<String> = args.iter().map(|(arg, _)| arg.clone().unwrap_or_default()).collect();
+                format!("{}({})", func.to_string(), args_str.join(", "))
             }
         }
     }

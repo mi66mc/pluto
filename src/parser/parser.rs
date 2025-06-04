@@ -225,6 +225,36 @@ impl Parser {
     fn parse_expression(&mut self, min_prec: u8) -> Result<ASTNode, String> {
         let mut left = self.parse_primary()?;
 
+        if let ASTNode::AnonymousFunction(_, _) = left {
+            if self.peek_kind() == Some(&TokenKind::LParen) {
+                self.advance(); // '('
+                let mut args = Vec::new();
+                if self.peek_kind() != Some(&TokenKind::RParen) {
+                    loop {
+                        let mut arg_name = None;
+                        if let Some(&TokenKind::Identifier(ref name)) = self.peek_kind() {
+                            let next_token = self.tokens.get(self.current + 1).map(|t| &t.kind);
+                            if next_token == Some(&TokenKind::Equal) {
+                                let name = name.clone();
+                                self.advance(); // identifier
+                                self.advance(); // equals
+                                arg_name = Some(name);
+                            }
+                        }
+                        let arg = self.parse_expression(0)?;
+                        args.push((arg_name, Box::new(arg)));
+                        if self.peek_kind() == Some(&TokenKind::RParen) {
+                            break;
+                        }
+                        self.consume(TokenKind::Comma, "Expected ',' or ')' in function arguments")?;
+                    }
+                }
+                self.consume(TokenKind::RParen, "Expected ')' after arguments")?;
+                left = ASTNode::ImmediateInvocation(Box::new(left), args);
+            }
+            return Ok(left);
+        }
+
         if self.peek_kind() == Some(&TokenKind::Equal) {
             if let ASTNode::Identifier(ref name) = left {
                 self.advance(); // '='
@@ -376,11 +406,14 @@ impl Parser {
                     self.consume(TokenKind::RParen, "Expected ')' after function parameters")?;
                     self.consume(TokenKind::ArrowFunc, "Expected '->' after function parameters")?;
                     let body = if self.peek_kind() == Some(&TokenKind::LBrace) {
-                        self.parse_block_or_single_statement()?
+                        let block = self.parse_block_or_single_statement()?;
+                        block
                     } else {
-                        self.parse_expression(0)?
+                        let expr = self.parse_expression(0)?;
+                        expr
                     };
-                    return Ok(ASTNode::AnonymousFunction(params, Box::new(body)));
+                    let func = ASTNode::AnonymousFunction(params, Box::new(body));
+                    return Ok(func);
                 } else {
                     self.current = start_pos;
                     let expr = self.parse_expression(0)?;

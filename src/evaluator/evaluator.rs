@@ -289,6 +289,82 @@ impl Evaluator {
                 }))
             }
 
+            ASTNode::ImmediateInvocation(func, args) => {
+                let func_val = match self.eval(func)? {
+                    EvalResult::Value(v) => v,
+                    EvalResult::Return(v) => return Ok(EvalResult::Return(v)),
+                    EvalResult::Break => return Ok(EvalResult::Break),
+                    EvalResult::Continue => return Ok(EvalResult::Continue),
+                };
+
+                match func_val {
+                    Value::UserFunction { params, body, env } => {
+                        let mut new_env = env.clone();
+                        let mut local_env: HashMap<String, (Value, bool)> = HashMap::new();
+
+                        let mut evaluated_args = Vec::new();
+                        for (name, arg) in args {
+                            let v = match self.eval(arg)? {
+                                EvalResult::Value(v) => v,
+                                EvalResult::Return(v) => return Ok(EvalResult::Return(v)),
+                                EvalResult::Break => return Ok(EvalResult::Break),
+                                EvalResult::Continue => return Ok(EvalResult::Continue),
+                            };
+                            evaluated_args.push((name, v));
+                        }
+
+                        let mut used_params = vec![false; params.len()];
+                        
+                        for (arg_name, value) in evaluated_args.iter() {
+                            if let Some(name) = arg_name {
+                                if let Some(pos) = params.iter().position(|p| &p.0 == name) {
+                                    if used_params[pos] {
+                                        return Err(format!("Parameter '{}' specified multiple times", name));
+                                    }
+                                    local_env.insert(name.clone(), (value.clone(), false));
+                                    used_params[pos] = true;
+                                } else {
+                                    return Err(format!("Unknown parameter name '{}'", name));
+                                }
+                            }
+                        }
+
+                        let mut pos = 0;
+                        for (param_name, default_value) in params.iter() {
+                            if !used_params[pos] {
+                                if let Some(arg_value) = evaluated_args.get(pos) {
+                                    local_env.insert(param_name.clone(), (arg_value.1.clone(), false));
+                                } else if let Some(default) = default_value {
+                                    let default_val = match self.eval(default)? {
+                                        EvalResult::Value(v) => v,
+                                        EvalResult::Return(v) => return Ok(EvalResult::Return(v)),
+                                        EvalResult::Break => return Ok(EvalResult::Break),
+                                        EvalResult::Continue => return Ok(EvalResult::Continue),
+                                    };
+                                    local_env.insert(param_name.clone(), (default_val, false));
+                                } else {
+                                    return Err(format!("Missing argument for parameter '{}'", param_name));
+                                }
+                            }
+                            pos += 1;
+                        }
+
+                        new_env.push(local_env);
+                        let mut evaluator = Evaluator {
+                            env_stack: new_env,
+                        };
+                        let result = evaluator.eval(&body)?;
+                        match result {
+                            EvalResult::Return(val) => Ok(EvalResult::Value(val)),
+                            EvalResult::Value(val) => Ok(EvalResult::Value(val)),
+                            EvalResult::Break => return Ok(EvalResult::Break),
+                            EvalResult::Continue => return Ok(EvalResult::Continue),
+                        }
+                    }
+                    _ => Err("Cannot invoke a non-function value".to_string()),
+                }
+            }
+
             ASTNode::FunctionCall(name, args) => {
                 if let Some(val) = self.lookup(name) {
                     match val {
