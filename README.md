@@ -336,6 +336,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 |------------------|------------|---------|-------------|
 | `Math.pi` | none | Float | Mathematical constant π |
 | `Math.pow(base, exp)` | Number/Float, Number/Float | Float | Returns base raised to exp power |
+| `Math.sqrt(value)` | Number/Float | Number/Float | Returns the square root of value |
 
 #### Time Module
 | Function | Parameters | Returns | Description |
