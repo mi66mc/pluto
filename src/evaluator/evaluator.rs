@@ -174,9 +174,10 @@ impl Evaluator {
             ASTNode::Block(statements) => {
                 self.env_stack.push(HashMap::new());
                 let mut last = Value::Null;
+                
                 for stmt in statements {
                     match self.eval(stmt)? {
-                        EvalResult::Value(val) => last = val,
+                        EvalResult::Value(_) => last = Value::Null,
                         EvalResult::Return(val) => {
                             self.env_stack.pop();
                             return Ok(EvalResult::Return(val));

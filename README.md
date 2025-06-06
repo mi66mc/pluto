@@ -138,6 +138,17 @@ let greet = (name="World", greeting="Hello") -> {
 greet();                          /* "Hello, World!" */
 greet("Alice");                   /* "Hello, Alice!" */
 greet(greeting="Hi", name="Bob"); /* "Hi, Bob!" */
+
+/* Immediate function invocation */
+((x) -> x * x)(5);               /* 25 */
+((name) -> print("Hello, " + name))("World");  /* "Hello, World!" */
+
+/* Function return values */
+fn square(x) x*x;     /* Returns x*x (expression) */
+fn cube(x) {x*x*x;}   /* Returns null (block with no return) */
+fn quad(x) {          /* Returns x^4 (explicit return) */
+    return x*x*x*x;
+}
 ```
 
 ### Data Structures
@@ -417,6 +428,36 @@ Note: All data structures in Pluto are immutable by default. Operations that app
 
 ---
 
+### REPL Environment
+Pluto comes with an interactive REPL (Read-Eval-Print Loop) environment:
+
+```bash
+$ pluto-lang
+
+=== Pluto Programming Language REPL ===
+Type :help for available commands
+Type :exit to quit
+
+>> let x = 42;
+42
+>> x + 8;
+50
+>> fn square(x) x*x;
+null
+>> square(5);
+25
+>> ((x) -> x*x)(6);
+36
+>> (x) -> x*x;
+<function: params=[x], body=BinaryExpression(Identifier("x"), "*", Identifier("x")), env_size=1 >
+>> :help
+
+Available Commands:
+  :help, :h     - Show this help message
+  :clear, :c    - Clear the screen
+  :exit, :q     - Exit the REPL
+  :reset        - Reset the environment
+```
 
 <div align="center">
   <p>
