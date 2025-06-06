@@ -310,6 +310,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 | `to_upper()` | none | String | Converts string to uppercase |
 | `to_lower()` | none | String | Converts string to lowercase |
 | `char_at(index)` | Number | String | Returns character at index as string |
+| `concat(str1, str2, ...)` | String, String... | String | Concatenates strings |
+| `is_number()` | none | Boolean | Checks if string is a number |
+| `is_float()` | none | Boolean | Checks if string is a float |
 
 #### Number Methods
 | Method | Parameters | Returns | Description |

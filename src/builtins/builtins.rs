@@ -68,6 +68,42 @@ fn string_char_at(v: &Value, args: Vec<Value>) -> Result<Value, String> {
     }
 }
 
+fn string_concat(v: &Value, args: Vec<Value>) -> Result<Value, String> {
+    if let Value::String(s) = v {
+        let mut result = s.clone();
+        for arg in args {
+            result.push_str(&arg.to_string());
+        }
+        Ok(Value::String(result))
+    } else {
+        Err("Not a string".into())
+    }
+}
+
+fn string_is_a_number(v: &Value, _: Vec<Value>) -> Result<Value, String> {
+    if let Value::String(s) = v {
+        if let Ok(_) = s.parse::<i64>() {
+            Ok(Value::Bool(true))
+        } else {
+            Ok(Value::Bool(false))
+        }
+    } else {
+        Err("Not a string".into())
+    }
+}
+
+fn string_is_a_float(v: &Value, _: Vec<Value>) -> Result<Value, String> {
+    if let Value::String(s) = v {
+        if let Ok(_) = s.parse::<f64>() {
+            Ok(Value::Bool(true))
+        } else {
+            Ok(Value::Bool(false))
+        }
+    } else {
+        Err("Not a string".into())
+    }
+}
+
 // ------------------------------------------------------
 
 fn number_and_float_to_string(v: &Value, _: Vec<Value>) -> Result<Value, String> {
@@ -248,6 +284,9 @@ pub fn string_methods() -> HashMap<&'static str, MethodFn> {
     map.insert("to_upper", string_to_uppercase as MethodFn);
     map.insert("to_lower", string_to_lowercase as MethodFn);
     map.insert("char_at", string_char_at as MethodFn);
+    map.insert("concat", string_concat as MethodFn);
+    map.insert("is_number", string_is_a_number as MethodFn);
+    map.insert("is_float", string_is_a_float as MethodFn);
     map
 }
 

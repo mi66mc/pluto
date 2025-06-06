@@ -30,13 +30,13 @@ fn main() {
             match evaluator.evaluate(&ast) {
                 Ok(_) => (),
                 Err(e) => {
-                    println!("{}", colors::error(&e));
+                    println!("{}{}Error: {}{}", colors::BOLD, colors::RED, colors::RESET, &e);
                     std::process::exit(1);
                 }
             }
         },
         Err(e) => {
-            println!("{}", e);
+            println!("{}{}Error: {}{}", colors::BOLD, colors::RED, colors::RESET, &e);
             std::process::exit(1);
         }
     }

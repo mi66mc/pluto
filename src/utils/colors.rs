@@ -43,9 +43,9 @@ pub fn bold(text: &str) -> String {
 //     format!("{}{}{}", MAGENTA, text, RESET)
 // }
 
-pub fn error(msg: &str) -> String {
-    format!("{}Error:{} {}", RED, RESET, msg)
-}
+// pub fn error(msg: &str) -> String {
+//     format!("{}Error:{} {}", RED, RESET, msg)
+// }
 
 // pub fn success(msg: &str) -> String {
 //     format!("{}{}{}", GREEN, msg, RESET)

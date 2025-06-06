@@ -72,7 +72,7 @@ fn evaluate_input(input: &str, env: &mut Evaluator) {
                     println!("{}", blue(&s));
                 }
             }
-            Err(e) => println!("{}", colors::error(&e)),
+            Err(e) => println!("{}{}Error: {}{}", colors::BOLD, colors::RED, colors::RESET, &e.to_string()),
         },
         Err(e) => println!("{}", e),
     }
@@ -141,7 +141,7 @@ pub fn repl() {
                 }
             }
             Err(error) => {
-                println!("{}", colors::error(&error.to_string()));
+                println!("{}{}Error: {}{}", colors::BOLD, colors::RED, colors::RESET, &error.to_string());
                 break;
             }
         }
