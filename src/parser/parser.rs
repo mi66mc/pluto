@@ -317,6 +317,53 @@ impl Parser {
             TokenKind::Float(f)             => ASTNode::FloatLiteral(f),
             TokenKind::Boolean(b)          => ASTNode::BooleanLiteral(b),
             TokenKind::StringLiteral(s)  => ASTNode::StringLiteral(s),
+            TokenKind::Underscore => ASTNode::Identifier("_".to_string()),
+            TokenKind::Match => {
+                let expr = self.parse_expression(0)?;
+                self.consume(TokenKind::LBrace, "Expected '{' after match expression")?;
+                
+                let mut arms = Vec::new();
+                let mut has_default = false;
+
+                while !self.match_kind(TokenKind::RBrace) {
+                    let pattern = self.parse_expression(0)?;
+                    if let ASTNode::Identifier(ref name) = pattern {
+                        if name == "_" {
+                            if has_default {
+                                return Err("Multiple default patterns in match expression".into());
+                            }
+                            has_default = true;
+                        }
+                    }
+
+                    self.consume(TokenKind::ArrowFunc, "Expected '->' after match pattern")?;
+                    
+                    let result = if self.peek_kind() == Some(&TokenKind::LBrace) {
+                        let block = self.parse_block_or_single_statement()?;
+                        if !self.peek_kind().map_or(false, |k| k == &TokenKind::RBrace) {
+                            self.consume(TokenKind::Comma, "Expected ',' after match arm block")?;
+                        }
+                        block
+                    } else {
+                        let expr = self.parse_expression(0)?;
+                        if !self.peek_kind().map_or(false, |k| k == &TokenKind::RBrace) {
+                            self.consume(TokenKind::Comma, "Expected ',' after match arm")?;
+                        }
+                        expr
+                    };
+                    
+                    arms.push((Box::new(pattern), Box::new(result)));
+                }
+
+                let match_expr = ASTNode::MatchExpression(Box::new(expr), arms);
+                ASTNode::ImmediateInvocation(
+                    Box::new(ASTNode::AnonymousFunction(
+                        vec![],
+                        Box::new(match_expr)
+                    )),
+                    vec![]
+                )
+            },
             TokenKind::LBracket => {
                 let mut elements = Vec::new();
                 if self.peek_kind() != Some(&TokenKind::RBracket) {

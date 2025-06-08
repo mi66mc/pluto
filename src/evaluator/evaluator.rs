@@ -926,6 +926,74 @@ impl Evaluator {
             ASTNode::Break => Ok(EvalResult::Break),
             
             ASTNode::Continue => Ok(EvalResult::Continue),
+
+            ASTNode::MatchExpression(expr, arms) => {
+                let value = match self.eval(expr)? {
+                    EvalResult::Value(v) => v,
+                    result => return Ok(result),
+                };
+
+                let mut default_arm = None;
+                if let Some((pattern, result)) = arms.last() {
+                    if let ASTNode::Identifier(name) = &**pattern {
+                        if name == "_" {
+                            default_arm = Some(result);
+                        }
+                    }
+                }
+
+                for (pattern, result) in arms.iter().take(arms.len() - default_arm.is_some() as usize) {
+                    match &**pattern {
+                        ASTNode::NumberLiteral(n) => {
+                            if let Value::Number(val) = value {
+                                if val == *n {
+                                    return self.eval(result);
+                                }
+                            }
+                            continue;
+                        }
+                        ASTNode::StringLiteral(s) => {
+                            if let Value::String(val) = &value {
+                                if val == s {
+                                    return self.eval(result);
+                                }
+                            }
+                            continue;
+                        }
+                        ASTNode::BooleanLiteral(b) => {
+                            if let Value::Bool(val) = value {
+                                if val == *b {
+                                    return self.eval(result);
+                                }
+                            }
+                            continue;
+                        }
+                        ASTNode::NullLiteral => {
+                            if let Value::Null = value {
+                                return self.eval(result);
+                            }
+                            continue;
+                        }
+                        _ => {}
+                    }
+
+                    let pattern_val = match self.eval(pattern)? {
+                        EvalResult::Value(v) => v,
+                        result => return Ok(result),
+                    };
+
+                    match self.eval_binary(value.clone(), "==", pattern_val)? {
+                        Value::Bool(true) => return self.eval(result),
+                        _ => {}
+                    }
+                }
+
+                if let Some(default_result) = default_arm {
+                    self.eval(default_result)
+                } else {
+                    Ok(EvalResult::Value(Value::Null))
+                }
+            }
         }
     }
 
@@ -995,18 +1063,22 @@ impl Evaluator {
             },
             (Value::String(a), Value::Number(b)) => match op {
                 "+" => Ok(Value::String(a + &b.to_string())),
+                "==" => Ok(Value::Bool(false)),
                 _ => Err(format!("Unknown string-number operator: {}", op)),
             },
             (Value::Number(a), Value::String(b)) => match op {
                 "+" => Ok(Value::String(a.to_string() + &b)),
+                "==" => Ok(Value::Bool(false)),
                 _ => Err(format!("Unknown number-string operator: {}", op)),
             },
             (Value::String(a), Value::Float(b)) => match op {
                 "+" => Ok(Value::String(a + &b.to_string())),
+                "==" => Ok(Value::Bool(false)),
                 _ => Err(format!("Unknown string-float operator: {}", op)),
             },
             (Value::Float(a), Value::String(b)) => match op {
                 "+" => Ok(Value::String(a.to_string() + &b)),
+                "==" => Ok(Value::Bool(false)),
                 _ => Err(format!("Unknown float-string operator: {}", op)),
             },
             (Value::Bool(a), Value::Bool(b)) => match op {

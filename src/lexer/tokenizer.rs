@@ -228,6 +228,21 @@ pub fn tokenize(input: &str) -> Vec<Token> {
             '.' => tokens.push(Token::new(TokenKind::Dot, position)),
             ':' => tokens.push(Token::new(TokenKind::Colon, position)),
             '?' => tokens.push(Token::new(TokenKind::QuestionMark, position)),
+            '_' => {
+                if position + 1 < bytes.len() && 
+                   ((bytes[position + 1] as char).is_alphanumeric() || bytes[position + 1] as char == '_') {
+                    let start = position;
+                    while position < bytes.len() && 
+                          ((bytes[position] as char).is_alphanumeric() || bytes[position] as char == '_') {
+                        position += 1;
+                    }
+                    let identifier = &input[start..position];
+                    tokens.push(Token::new(TokenKind::Identifier(identifier.to_string()), start));
+                    continue;
+                } else {
+                    tokens.push(Token::new(TokenKind::Underscore, position));
+                }
+            },
             'a'..='z' | 'A'..='Z' => {
                 let start = position;
                 while position < bytes.len() && ((bytes[position] as char).is_alphanumeric() || (bytes[position] as char) == '_') {
@@ -248,6 +263,7 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                     "break" => TokenKind::Break,
                     "continue" => TokenKind::Continue,
                     "null" => TokenKind::Null,
+                    "match" => TokenKind::Match,
                     _ => TokenKind::Identifier(identifier.to_string()),
                 };
                 tokens.push(Token::new(kind, start));

@@ -37,6 +37,7 @@ pub enum ASTNode {
         Option<Box<ASTNode>>,
         Box<ASTNode>,
     ),
+    MatchExpression(Box<ASTNode>, Vec<(Box<ASTNode>, Box<ASTNode>)>),
 }
 
 pub trait ASTNodeTrait {
@@ -167,6 +168,13 @@ impl ASTNodeTrait for ASTNode {
             ASTNode::ImmediateInvocation(func, args) => {
                 let args_str: Vec<String> = args.iter().map(|(arg, _)| arg.clone().unwrap_or_default()).collect();
                 format!("{}({})", func.to_string(), args_str.join(", "))
+            }
+            ASTNode::MatchExpression(expr, arms) => {
+                let arms_str: Vec<String> = arms
+                    .iter()
+                    .map(|(pattern, result)| format!("{} => {}", pattern.to_string(), result.to_string()))
+                    .collect();
+                format!("match {} {{ {} }}", expr.to_string(), arms_str.join(", "))
             }
         }
     }

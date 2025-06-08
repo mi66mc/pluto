@@ -253,6 +253,71 @@ let message = ? is_logged_in ->
     : "Please log in";
 ```
 
+#### Match Expressions
+
+Match expressions provide a powerful pattern matching mechanism in Pluto. They allow you to compare a value against a series of patterns and execute code based on which pattern matches.
+
+##### Basic Syntax
+```pluto
+match value {
+    pattern1 -> expression1,
+    pattern2 -> expression2,
+    _ -> default_expression
+}
+```
+
+##### Features
+
+1. **Literal Patterns**
+```pluto
+let num = 2;
+match num {
+    1 -> "one",
+    2 -> "two",
+    _ -> "other"
+}
+```
+
+2. **Block Expressions with Return**
+```pluto
+match greeting {
+    "hi" -> {
+        let msg = "Hi there!";
+        return msg;
+    },
+    _ -> "default greeting"
+}
+```
+
+3. **Multiple Types**
+```pluto
+match value {
+    42 -> "number 42",
+    "42" -> "string 42",
+    true -> "boolean true",
+    null -> "null value",
+    _ -> "something else"
+}
+```
+
+4. **Expression Matching**
+```pluto
+let x = 10;
+let y = 5;
+match x + y {
+    15 -> "equals 15",
+    _ -> "not 15"
+}
+```
+
+##### Notes
+- The `_` pattern acts as a catch-all default case
+- Patterns are checked in order from top to bottom
+- Different types can be mixed in the same match expression
+- Block expressions can use `return` statements
+- Commas are required between arms, but optional before the closing brace
+- Type mismatches (like comparing string with number) evaluate to false
+
 #### Loops
 ```pluto
 /* For loop */

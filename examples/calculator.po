@@ -1,0 +1,72 @@
+fn get_number(prompt) {
+    while (true) {
+        print(prompt);
+        let input = input();
+        if (input.is_number()) {
+            return input.to_int();
+        } else {
+            print("Please enter a valid number");
+            continue;
+        }
+    }
+}
+
+fn calculate(op, a, b) {
+    return match op {
+        "+" -> a + b,
+        "-" -> a - b,
+        "*" -> a * b,
+        "/" -> match b {
+            0 -> "Error: Division by zero",
+            _ -> a / b
+        },
+        "%" -> match b {
+            0 -> "Error: Modulo by zero",
+            _ -> a % b
+        },
+        _ -> "Error: Invalid operation"
+    };
+}
+
+fn main() {
+    while (true) {
+        print("\nCalculator Menu:");
+        print("1. Add (+)");
+        print("2. Subtract (-)");
+        print("3. Multiply (*)");
+        print("4. Divide (/)");
+        print("5. Modulo (%)");
+        print("6. Exit");
+        
+        let choice = get_number("Enter your choice (1-6): ");
+        
+        match choice {
+            6 -> {
+                print("Goodbye!");
+                return exit(0);
+            },
+            _ -> {
+                let operation = match choice {
+                    1 -> "+",
+                    2 -> "-",
+                    3 -> "*",
+                    4 -> "/",
+                    5 -> "%",
+                    _ -> {
+                        print("Invalid choice!");
+                        continue;
+                    }
+                };
+                
+                let a = get_number("Enter first number: ");
+                let b = get_number("Enter second number: ");
+                let result = calculate(operation, a, b);
+                print(result);
+                print("\nOperation: " + operation);
+                print("Result: " + result);
+            }
+        };
+    }
+}
+
+main();
