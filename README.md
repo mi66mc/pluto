@@ -16,8 +16,8 @@
 
 <div align="center">
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Rust](https://img.shields.io/badge/Rust-2021-orange.svg)](https://www.rust-lang.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat&logo=license&logoColor=white)](https://opensource.org/licenses/MIT)
+[![Rust](https://img.shields.io/badge/Rust-000000?style=flat&logo=rust&logoColor=white)](https://www.rust-lang.org)
 
 </div>
 
@@ -40,6 +40,16 @@ Your first Pluto program:
 ```pluto
 /* Hello World in Pluto */
 print("Hello, World!");
+
+/* Quick example of Pluto's features */
+let greet = (name="World") -> {
+    ? name == "World" ->
+        print("Hello, stranger!")
+        : print("Welcome back, " + name + "!");
+};
+
+greet();        /* Hello, stranger! */
+greet("Alice"); /* Welcome back, Alice! */
 ```
 
 ## 📖 Table of Contents
@@ -53,6 +63,39 @@ print("Hello, World!");
 - [License](#-license)
 
 ## ✨ Features
+
+<div align="center">
+  <table>
+    <tr>
+      <td width="33%">
+        <div align="center">
+          <h3>🔄 Dynamic Typing</h3>
+          <p>Type inference and flexible typing</p>
+        </div>
+        <pre><code>let number = 42;
+let text = "Hello";
+let flag = true;</code></pre>
+      </td>
+      <td width="33%">
+        <div align="center">
+          <h3>🎯 First-class Functions</h3>
+          <p>Arrow syntax and closures</p>
+        </div>
+        <pre><code>let greet = (name) -> {
+    print("Hello, " + name);
+}</code></pre>
+      </td>
+      <td width="33%">
+        <div align="center">
+          <h3>🛡️ Immutable by Default</h3>
+          <p>Safe and predictable code</p>
+        </div>
+        <pre><code>let arr = [1, 2, 3];
+let new_arr = arr.push(4);</code></pre>
+      </td>
+    </tr>
+  </table>
+</div>
 
 ### Core Features
 - 🔄 Dynamic typing with type inference
@@ -194,6 +237,20 @@ if x > 0 {
 } else {
     print("Zero");
 }
+```
+
+#### Ternary Operator
+```pluto
+/* Ternary syntax: ? condition -> then_expr : else_expr */
+let status = ? age >= 18 -> "adult" : "minor";
+
+/* Can also be used with function calls */
+? score > 100 -> print("High score!") : print("Keep trying!");
+
+/* Nested ternary expressions */
+let message = ? is_logged_in -> 
+    ? is_admin -> "Welcome, admin!" : "Welcome, user!" 
+    : "Please log in";
 ```
 
 #### Loops

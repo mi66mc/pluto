@@ -21,6 +21,7 @@ pub enum ASTNode {
     FunctionCall(String, Vec<(Option<String>, Box<ASTNode>)>),
     ImmediateInvocation(Box<ASTNode>, Vec<(Option<String>, Box<ASTNode>)>),
     IfStatement(Box<ASTNode>, Box<ASTNode>, Option<Box<ASTNode>>),
+    TernaryExpression(Box<ASTNode>, Box<ASTNode>, Box<ASTNode>),
     WhileStatement(Box<ASTNode>, Box<ASTNode>),
     ReturnStatement(Option<Box<ASTNode>>),
     MemberAccess(Box<ASTNode>, String), // Math.pi
@@ -45,6 +46,9 @@ pub trait ASTNodeTrait {
 impl ASTNodeTrait for ASTNode {
     fn to_string(&self) -> String {
         match self {
+            ASTNode::TernaryExpression(condition, then_branch, else_branch) => {
+                format!("? {} -> {} : {}", condition.to_string(), then_branch.to_string(), else_branch.to_string())
+            }
             ASTNode::ConstDeclaration(name, initializer) => {
                 let init_str = if let Some(init) = initializer {
                     format!(" = {}", init.to_string())

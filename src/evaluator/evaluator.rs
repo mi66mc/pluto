@@ -513,6 +513,20 @@ impl Evaluator {
 
             ASTNode::BooleanLiteral(b) => Ok(EvalResult::Value(Value::Bool(*b))),
 
+            ASTNode::TernaryExpression(condition, then_branch, else_branch) => {
+                let cond_val = match self.eval(condition)? {
+                    EvalResult::Value(v) => v,
+                    EvalResult::Return(v) => return Ok(EvalResult::Return(v)),
+                    EvalResult::Break => return Ok(EvalResult::Break),
+                    EvalResult::Continue => return Ok(EvalResult::Continue),
+                };
+                match cond_val {
+                    Value::Bool(true) => self.eval(then_branch),
+                    Value::Bool(false) => self.eval(else_branch),
+                    _ => Err("Condition in ternary expression must be a boolean".to_string()),
+                }
+            }
+
             ASTNode::IfStatement(condition, then_branch, else_branch) => {
                 let cond_val = match self.eval(condition)? {
                     EvalResult::Value(v) => v,

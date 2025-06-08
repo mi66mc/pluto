@@ -421,6 +421,14 @@ impl Parser {
                     return Ok(expr);
                 }
             }
+            TokenKind::QuestionMark => {
+                let condition = self.parse_expression(0)?;
+                self.consume(TokenKind::ArrowFunc, "Expected '->' after '?' in ternary expression")?;
+                let then_branch = self.parse_expression(0)?;
+                self.consume(TokenKind::Colon, "Expected ':' after then-branch in ternary expression")?;
+                let else_branch = self.parse_expression(0)?;
+                ASTNode::TernaryExpression(Box::new(condition), Box::new(then_branch), Box::new(else_branch))
+            }
             TokenKind::Not => {
                 let expr = self.parse_primary()?;
                 ASTNode::UnaryExpression("!".to_string(), Box::new(expr))
