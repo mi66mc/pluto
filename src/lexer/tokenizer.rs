@@ -3,11 +3,11 @@ use crate::constants::token::Token;
 
 pub fn tokenize(input: &str) -> Vec<Token> {
     let mut tokens = Vec::new();
-    let bytes = input.as_bytes();
+    let chars: Vec<char> = input.chars().collect();
     let mut position = 0;
 
-    while position < bytes.len() {
-        let current_char = bytes[position] as char;
+    while position < chars.len() {
+        let current_char = chars[position];
 
         // skip whitespace
         if current_char.is_whitespace() {
@@ -15,12 +15,12 @@ pub fn tokenize(input: &str) -> Vec<Token> {
             continue;
         }
 
-        if current_char == '/' && position + 1 < bytes.len() && bytes[position + 1] as char == '*' {
+        if current_char == '/' && position + 1 < chars.len() && chars[position + 1] == '*' {
             position += 2; // /*
             
-            while position + 1 < bytes.len() {
-                let curr = bytes[position] as char;
-                let next = bytes[position + 1] as char;
+            while position + 1 < chars.len() {
+                let curr = chars[position];
+                let next = chars[position + 1];
                 
                 if curr == '*' && next == '/' {
                     position += 2; // */
@@ -36,8 +36,8 @@ pub fn tokenize(input: &str) -> Vec<Token> {
             let mut has_dot = false;
             let mut dot_position = 0;
             
-            while position < bytes.len() && ((bytes[position] as char).is_digit(10) || (bytes[position] as char) == '.') {
-                if (bytes[position] as char) == '.' {
+            while position < chars.len() && (chars[position].is_digit(10) || chars[position] == '.') {
+                if chars[position] == '.' {
                     if has_dot {
                         break;
                     }
@@ -47,13 +47,13 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                 position += 1;
             }
 
+            let number_str = chars[start..position].iter().collect::<String>();
             if has_dot && dot_position + 1 < position {
-                let number_str = &input[start..position];
                 let number: f64 = number_str.parse().unwrap();
                 tokens.push(Token::new(TokenKind::Float(number), start));
             } else {
                 let end = if has_dot { dot_position } else { position };
-                let number_str = &input[start..end];
+                let number_str = chars[start..end].iter().collect::<String>();
                 let number: i64 = number_str.parse().unwrap();
                 tokens.push(Token::new(TokenKind::Number(number), start));
                 
@@ -72,10 +72,10 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                 let start = position + 1;
                 position += 1;
                 let mut string = String::new();
-                while position < bytes.len() {
-                    let c = bytes[position] as char;
-                    if c == '\\' && position + 1 < bytes.len() {
-                        let next = bytes[position + 1] as char;
+                while position < chars.len() {
+                    let c = chars[position];
+                    if c == '\\' && position + 1 < chars.len() {
+                        let next = chars[position + 1];
                         match next {
                             '"' => {
                                 string.push('"');
@@ -109,17 +109,12 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                 tokens.push(Token::new(TokenKind::StringLiteral(string), start));
                 continue;
             }
-            // '+' => tokens.push(Token::new(TokenKind::Plus, position)),
-            // '-' => tokens.push(Token::new(TokenKind::Minus, position)),
-            // '*' => tokens.push(Token::new(TokenKind::Star, position)),
-            // '/' => tokens.push(Token::new(TokenKind::Slash, position)),
-            // '%' => tokens.push(Token::new(TokenKind::Percent, position)),
             '+' => {
-                if position + 1 < bytes.len() && bytes[position + 1] as char == '+' {
+                if position + 1 < chars.len() && chars[position + 1] == '+' {
                     tokens.push(Token::new(TokenKind::PlusPlus, position));
                     position += 2;
                     continue;
-                } else if position + 1 < bytes.len() && bytes[position + 1] as char == '=' {
+                } else if position + 1 < chars.len() && chars[position + 1] == '=' {
                     tokens.push(Token::new(TokenKind::PlusEqual, position));
                     position += 2;
                     continue;
@@ -128,15 +123,15 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                 }
             }
             '-' => {
-                if position + 1 < bytes.len() && bytes[position + 1] as char == '-' {
+                if position + 1 < chars.len() && chars[position + 1] == '-' {
                     tokens.push(Token::new(TokenKind::MinusMinus, position));
                     position += 2;
                     continue;
-                } else if position + 1 < bytes.len() && bytes[position + 1] as char == '=' {
+                } else if position + 1 < chars.len() && chars[position + 1] == '=' {
                     tokens.push(Token::new(TokenKind::MinusEqual, position));
                     position += 2;
                     continue;
-                } else if position + 1 < bytes.len() && bytes[position + 1] as char == '>' {
+                } else if position + 1 < chars.len() && chars[position + 1] == '>' {
                     tokens.push(Token::new(TokenKind::ArrowFunc, position));
                     position += 2;
                     continue;
@@ -145,7 +140,7 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                 }
             }
             '*' => {
-                if position + 1 < bytes.len() && bytes[position + 1] as char == '=' {
+                if position + 1 < chars.len() && chars[position + 1] == '=' {
                     tokens.push(Token::new(TokenKind::StarEqual, position));
                     position += 2;
                     continue;
@@ -154,7 +149,7 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                 }
             }
             '/' => {
-                if position + 1 < bytes.len() && bytes[position + 1] as char == '=' {
+                if position + 1 < chars.len() && chars[position + 1] == '=' {
                     tokens.push(Token::new(TokenKind::SlashEqual, position));
                     position += 2;
                     continue;
@@ -166,7 +161,7 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                 tokens.push(Token::new(TokenKind::Percent, position));
             }
             '=' => {
-                if position + 1 < bytes.len() && bytes[position + 1] as char == '=' {
+                if position + 1 < chars.len() && chars[position + 1] == '=' {
                     tokens.push(Token::new(TokenKind::EqualsEqual, position));
                     position += 2;
                     continue;
@@ -175,7 +170,7 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                 }
             }
             '!' => {
-                if position + 1 < bytes.len() && bytes[position + 1] as char == '=' {
+                if position + 1 < chars.len() && chars[position + 1] == '=' {
                     tokens.push(Token::new(TokenKind::NotEqual, position));
                     position += 2;
                     continue;
@@ -184,7 +179,7 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                 }
             }
             '<' => {
-                if position + 1 < bytes.len() && bytes[position + 1] as char == '=' {
+                if position + 1 < chars.len() && chars[position + 1] == '=' {
                     tokens.push(Token::new(TokenKind::LessThanEqual, position));
                     position += 2;
                     continue;
@@ -193,7 +188,7 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                 }
             }
             '>' => {
-                if position + 1 < bytes.len() && bytes[position + 1] as char == '=' {
+                if position + 1 < chars.len() && chars[position + 1] == '=' {
                     tokens.push(Token::new(TokenKind::GreaterThanEqual, position));
                     position += 2;
                     continue;
@@ -202,7 +197,7 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                 }
             }
             '&' => {
-                if position + 1 < bytes.len() && bytes[position + 1] as char == '&' {
+                if position + 1 < chars.len() && chars[position + 1] == '&' {
                     tokens.push(Token::new(TokenKind::And, position));
                     position += 2;
                     continue;
@@ -211,7 +206,7 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                 }
             }
             '|' => {
-                if position + 1 < bytes.len() && bytes[position + 1] as char == '|' {
+                if position + 1 < chars.len() && chars[position + 1] == '|' {
                     tokens.push(Token::new(TokenKind::Or, position));
                     position += 2;
                     continue;
@@ -229,15 +224,15 @@ pub fn tokenize(input: &str) -> Vec<Token> {
             ':' => tokens.push(Token::new(TokenKind::Colon, position)),
             '?' => tokens.push(Token::new(TokenKind::QuestionMark, position)),
             '_' => {
-                if position + 1 < bytes.len() && 
-                   ((bytes[position + 1] as char).is_alphanumeric() || bytes[position + 1] as char == '_') {
+                if position + 1 < chars.len() && 
+                   (chars[position + 1].is_alphanumeric() || chars[position + 1] == '_') {
                     let start = position;
-                    while position < bytes.len() && 
-                          ((bytes[position] as char).is_alphanumeric() || bytes[position] as char == '_') {
+                    while position < chars.len() && 
+                          (chars[position].is_alphanumeric() || chars[position] == '_') {
                         position += 1;
                     }
-                    let identifier = &input[start..position];
-                    tokens.push(Token::new(TokenKind::Identifier(identifier.to_string()), start));
+                    let identifier = chars[start..position].iter().collect::<String>();
+                    tokens.push(Token::new(TokenKind::Identifier(identifier), start));
                     continue;
                 } else {
                     tokens.push(Token::new(TokenKind::Underscore, position));
@@ -245,11 +240,11 @@ pub fn tokenize(input: &str) -> Vec<Token> {
             },
             'a'..='z' | 'A'..='Z' => {
                 let start = position;
-                while position < bytes.len() && ((bytes[position] as char).is_alphanumeric() || (bytes[position] as char) == '_') {
+                while position < chars.len() && (chars[position].is_alphanumeric() || chars[position] == '_') {
                     position += 1;
                 }
-                let identifier = &input[start..position];
-                let kind = match identifier {
+                let identifier = chars[start..position].iter().collect::<String>();
+                let kind = match identifier.as_str() {
                     "let" => TokenKind::Let,
                     "const" => TokenKind::Const,
                     "for" => TokenKind::For,
@@ -264,7 +259,7 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                     "continue" => TokenKind::Continue,
                     "null" => TokenKind::Null,
                     "match" => TokenKind::Match,
-                    _ => TokenKind::Identifier(identifier.to_string()),
+                    _ => TokenKind::Identifier(identifier),
                 };
                 tokens.push(Token::new(kind, start));
                 continue;
