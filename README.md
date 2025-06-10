@@ -253,6 +253,13 @@ let message = ? is_logged_in ->
     : "Please log in";
 ```
 
+#### Elvis Operator
+```pluto
+let inp = input("What's up? ");
+let r = inp ?: "Nothing"; /* If inp is null, return "Nothing", otherwise return inp */
+print(r); /* If the user doesn't input anything, print "Nothing" */
+```
+
 #### Match Expressions
 
 Match expressions provide a powerful pattern matching mechanism in Pluto. They allow you to compare a value against a series of patterns and execute code based on which pattern matches.
@@ -526,8 +533,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 | `++` | Number/Float | Postfix increment |
 | `--` | Number/Float | Postfix decrement |
 | `&&` | Boolean | Logical AND |
-| `||` | Boolean | Logical OR |
+| `\|\|` | Boolean | Logical OR |
 | `!` | Boolean | Logical NOT |
+| `?:` | Any | Elvis operator |
 
 ### Control Flow
 ```pluto

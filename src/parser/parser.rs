@@ -317,7 +317,7 @@ impl Parser {
 
     fn current_precedence(&self) -> Option<u8> {
         match self.peek_kind()? {
-            TokenKind::Or => Some(1),
+            TokenKind::Or | TokenKind::Elvis => Some(1),
             TokenKind::And => Some(2),
             TokenKind::EqualsEqual | TokenKind::NotEqual => Some(3),
             TokenKind::LessThan | TokenKind::GreaterThan | TokenKind::LessThanEqual | TokenKind::GreaterThanEqual => Some(4),

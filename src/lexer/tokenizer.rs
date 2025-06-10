@@ -244,7 +244,14 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                 continue;
             }
             ':' => tokens.push(Token::new(TokenKind::Colon, position)),
-            '?' => tokens.push(Token::new(TokenKind::QuestionMark, position)),
+            '?' => {
+                if position + 1 < chars.len() && chars[position + 1] == ':' {
+                    tokens.push(Token::new(TokenKind::Elvis, position));
+                    position += 2;
+                } else {
+                    tokens.push(Token::new(TokenKind::QuestionMark, position));
+                }
+            }
             '_' => {
                 if position + 1 < chars.len() && 
                    (chars[position + 1].is_alphanumeric() || chars[position + 1] == '_') {

@@ -134,6 +134,19 @@ impl Evaluator {
         None
     }
 
+    fn is_truthy(&self, value: &Value) -> bool {
+        match value {
+            Value::Bool(b) => *b,
+            Value::Number(n) => *n != 0,
+            Value::Float(f) => *f != 0.0,
+            Value::String(s) => !s.is_empty(),
+            Value::Array(arr) => !arr.is_empty(),
+            Value::Null => false,
+            Value::HashMapV(map) => !map.is_empty(),
+            _ => false
+        }
+    }
+
     pub fn evaluate(&mut self, ast: &ASTNode) -> Result<Value, String> {
         match self.eval(ast)? {
             EvalResult::Value(val) => Ok(val),
@@ -534,16 +547,14 @@ impl Evaluator {
                     EvalResult::Break => return Ok(EvalResult::Break),
                     EvalResult::Continue => return Ok(EvalResult::Continue),
                 };
-                match cond_val {
-                    Value::Bool(true) => self.eval(then_branch),
-                    Value::Bool(false) => {
-                        if let Some(else_b) = else_branch {
-                            self.eval(else_b)
-                        } else {
-                            Ok(EvalResult::Value(Value::Null))
-                        }
+                if self.is_truthy(&cond_val) {
+                    self.eval(then_branch)
+                } else {
+                    if let Some(else_branch) = else_branch {
+                        self.eval(else_branch)
+                    } else {
+                        Ok(EvalResult::Value(Value::Null))
                     }
-                    _ => Err("Condition in 'if' must be a boolean".to_string()),
                 }
             }
 
@@ -1025,6 +1036,9 @@ impl Evaluator {
     }
 
     fn eval_binary(&self, left: Value, op: &str, right: Value) -> Result<Value, String> {
+        if op == "?:" {
+            return Ok(if self.is_truthy(&left) { left } else { right });
+        }
         match (left, right) {
             (Value::Number(a), Value::Number(b)) => match op {
                 "+" => Ok(Value::Number(a + b)),

@@ -51,6 +51,7 @@ pub enum TokenKind {
     Else,
     Match,
     QuestionMark,
+    Elvis,
     EOF,
     Unknown(char),
     Colon,
@@ -64,6 +65,7 @@ pub trait TokenKindTrait {
 impl TokenKindTrait for TokenKind {
     fn to_string(&self) -> String {
         match self {
+            TokenKind::Elvis => "?:".to_string(),
             TokenKind::Match => "match".to_string(),
             TokenKind::QuestionMark => "?".to_string(),
             TokenKind::Else => "else".to_string(),

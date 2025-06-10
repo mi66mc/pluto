@@ -36,7 +36,7 @@ fn main() {
             }
         },
         Err(e) => {
-            println!("{}{}Error: {}{}", colors::BOLD, colors::RED, colors::RESET, &e);
+            println!("{}", e);
             std::process::exit(1);
         }
     }
