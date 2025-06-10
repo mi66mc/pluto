@@ -283,6 +283,22 @@ impl Parser {
             }
         }
 
+        if let Some(kind) = self.peek_kind() {
+            match kind {
+                TokenKind::DotDot => {
+                    self.advance();
+                    let right = self.parse_expression(0)?;
+                    return Ok(ASTNode::Range(Box::new(left), Box::new(right), false));
+                }
+                TokenKind::DotDotEqual => {
+                    self.advance();
+                    let right = self.parse_expression(0)?;
+                    return Ok(ASTNode::Range(Box::new(left), Box::new(right), true));
+                }
+                _ => {}
+            }
+        }
+
         while let Some(op_prec) = self.current_precedence() {
             if op_prec < min_prec {
                 break;

@@ -994,6 +994,33 @@ impl Evaluator {
                     Ok(EvalResult::Value(Value::Null))
                 }
             }
+
+            ASTNode::Range(start, end, inclusive) => {
+                let start_val = match self.eval(start)? {
+                    EvalResult::Value(v) => v,
+                    EvalResult::Return(v) => return Ok(EvalResult::Return(v)),
+                    EvalResult::Break => return Ok(EvalResult::Break),
+                    EvalResult::Continue => return Ok(EvalResult::Continue),
+                };
+                let end_val = match self.eval(end)? {
+                    EvalResult::Value(v) => v,
+                    EvalResult::Return(v) => return Ok(EvalResult::Return(v)),
+                    EvalResult::Break => return Ok(EvalResult::Break),
+                    EvalResult::Continue => return Ok(EvalResult::Continue),
+                };
+
+                match (start_val, end_val) {
+                    (Value::Number(start), Value::Number(end)) => {
+                        let range: Vec<Value> = if *inclusive {
+                            (start..=end).map(Value::Number).collect()
+                        } else {
+                            (start..end).map(Value::Number).collect()
+                        };
+                        Ok(EvalResult::Value(Value::Array(range)))
+                    }
+                    _ => Err("Range bounds must be numbers".to_string())
+                }
+            }
         }
     }
 

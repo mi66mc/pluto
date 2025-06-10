@@ -333,6 +333,15 @@ while (i < 5) {
 }
 ```
 
+### Range Operations
+```pluto
+/* Exclusive range (0 to 4) */
+let range1 = 0..5;     /* [0, 1, 2, 3, 4] */
+
+/* Inclusive range (0 to 5) */
+let range2 = 0..=5;    /* [0, 1, 2, 3, 4, 5] */
+```
+
 ## 🛠️ Built-in Modules
 
 ### Random Module

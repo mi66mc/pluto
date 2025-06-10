@@ -38,6 +38,9 @@ pub fn tokenize(input: &str) -> Vec<Token> {
             
             while position < chars.len() && (chars[position].is_digit(10) || chars[position] == '.') {
                 if chars[position] == '.' {
+                    if position + 1 < chars.len() && chars[position + 1] == '.' {
+                        break;
+                    }
                     if has_dot {
                         break;
                     }
@@ -220,7 +223,26 @@ pub fn tokenize(input: &str) -> Vec<Token> {
             '}' => tokens.push(Token::new(TokenKind::RBrace, position)),
             ';' => tokens.push(Token::new(TokenKind::Semicolon, position)),
             ',' => tokens.push(Token::new(TokenKind::Comma, position)),
-            '.' => tokens.push(Token::new(TokenKind::Dot, position)),
+            '.' => {
+                if position + 1 < chars.len() {
+                    if chars[position + 1] == '.' {
+                        if position + 2 < chars.len() && chars[position + 2] == '=' {
+                            tokens.push(Token::new(TokenKind::DotDotEqual, position));
+                            position += 3;
+                        } else {
+                            tokens.push(Token::new(TokenKind::DotDot, position));
+                            position += 2;
+                        }
+                    } else {
+                        tokens.push(Token::new(TokenKind::Dot, position));
+                        position += 1;
+                    }
+                } else {
+                    tokens.push(Token::new(TokenKind::Dot, position));
+                    position += 1;
+                }
+                continue;
+            }
             ':' => tokens.push(Token::new(TokenKind::Colon, position)),
             '?' => tokens.push(Token::new(TokenKind::QuestionMark, position)),
             '_' => {

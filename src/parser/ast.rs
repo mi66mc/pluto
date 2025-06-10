@@ -38,6 +38,7 @@ pub enum ASTNode {
         Box<ASTNode>,
     ),
     MatchExpression(Box<ASTNode>, Vec<(Box<ASTNode>, Box<ASTNode>)>),
+    Range(Box<ASTNode>, Box<ASTNode>, bool),
 }
 
 pub trait ASTNodeTrait {
@@ -176,6 +177,13 @@ impl ASTNodeTrait for ASTNode {
                     .collect();
                 format!("match {} {{ {} }}", expr.to_string(), arms_str.join(", "))
             }
+            ASTNode::Range(start, end, inclusive) => {
+                format!("{}{}{}",
+                    start.to_string(),
+                    if *inclusive { "..=" } else { ".." },
+                    end.to_string()
+                )
+            },
         }
     }
 }
