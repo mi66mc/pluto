@@ -1103,6 +1103,7 @@ impl Evaluator {
                 _ => Err(format!("Unknown mixed operator: {}", op)),
             },
             (Value::String(a), Value::Number(b)) => match op {
+                "*" => Ok(Value::String(a.repeat(b as usize))),
                 "+" => Ok(Value::String(a + &b.to_string())),
                 "==" => Ok(Value::Bool(false)),
                 _ => Err(format!("Unknown string-number operator: {}", op)),
@@ -1113,6 +1114,7 @@ impl Evaluator {
                 _ => Err(format!("Unknown number-string operator: {}", op)),
             },
             (Value::String(a), Value::Float(b)) => match op {
+                "*" => Ok(Value::String(a.repeat(b as usize))),
                 "+" => Ok(Value::String(a + &b.to_string())),
                 "==" => Ok(Value::Bool(false)),
                 _ => Err(format!("Unknown string-float operator: {}", op)),
